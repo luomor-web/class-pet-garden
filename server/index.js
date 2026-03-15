@@ -380,6 +380,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() })
 })
 
+// Fix pet_exp for existing students
+app.post('/api/fix-exp', (req, res) => {
+  // Update pet_exp to match total_points for students with pets
+  const result = db.prepare('UPDATE students SET pet_exp = total_points WHERE pet_type IS NOT NULL').run()
+  res.json({ success: true, updated: result.changes })
+})
+
 // Backup
 app.get('/api/backup', (req, res) => {
   const backup = {

@@ -1127,7 +1127,7 @@ onMounted(() => {
 
     <!-- Rules Modal -->
     <div v-if="showRulesModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-[600px] max-h-[80vh] overflow-auto">
+      <div class="bg-white rounded-xl p-6 w-[900px] max-h-[80vh] overflow-auto">
         <h3 class="text-lg font-bold mb-4">⚙️ 管理评价规则</h3>
         
         <!-- Add Rule Form -->
@@ -1166,7 +1166,7 @@ onMounted(() => {
           <template v-for="cat in categories" :key="cat">
             <div v-if="rules.filter(r => r.category === cat).length > 0" class="mb-4">
               <h4 class="font-medium text-gray-700 mb-2">{{ cat }}</h4>
-              <div class="grid grid-cols-2 gap-2">
+              <div class="grid grid-cols-4 gap-2">
                 <div 
                   v-for="rule in rules.filter(r => r.category === cat)" 
                   :key="rule.id"

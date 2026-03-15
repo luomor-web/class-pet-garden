@@ -983,7 +983,7 @@ onMounted(() => {
 
     <!-- Records Modal -->
     <div v-if="showRecordsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 w-[500px] max-h-[80vh] overflow-auto">
+      <div class="bg-white rounded-xl p-6 w-[800px] max-h-[80vh] overflow-auto">
         <h3 class="text-lg font-bold mb-4">📋 评价记录</h3>
         
         <div v-if="evaluationRecords.length === 0" class="text-center py-8 text-gray-500">

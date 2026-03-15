@@ -2,6 +2,11 @@ import express from 'express'
 import cors from 'cors'
 import Database from 'better-sqlite3'
 import { v4 as uuidv4 } from 'uuid'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const app = express()
 const PORT = 3002
@@ -10,8 +15,9 @@ const PORT = 3002
 app.use(cors())
 app.use(express.json())
 
-// Database
-const db = new Database('pet-garden.db')
+// Database - 使用绝对路径
+const dbPath = join(__dirname, 'pet-garden.db')
+const db = new Database(dbPath)
 
 // Create tables
 db.exec(`
@@ -275,12 +281,13 @@ app.post('/api/evaluations', (req, res) => {
   // Update student points
   db.prepare('UPDATE students SET total_points = total_points + ? WHERE id = ?').run(points, studentId)
   
-  // Get student info
+  // Get student info (after update)
   const student = db.prepare('SELECT * FROM students WHERE id = ?').get(studentId)
   
   // Update pet exp if student has a pet
+  // pet_exp should always equal total_points (with minimum 0)
   if (student && student.pet_type) {
-    const newExp = Math.max(0, student.pet_exp + points) // 扣分时不能变成负数
+    const newExp = Math.max(0, student.total_points)  // Sync with total_points
     let newLevel = student.pet_level
     
     // Level up logic (only for positive exp)
@@ -294,6 +301,8 @@ app.post('/api/evaluations', (req, res) => {
         }
       }
       newLevel = Math.min(newLevel, 8)
+    } else {
+      newLevel = 1  // Reset to level 1 if exp is 0
     }
     
     // Check if pet graduated (reached level 8)
@@ -342,20 +351,37 @@ app.delete('/api/evaluations/latest', (req, res) => {
 })
 
 app.get('/api/evaluations', (req, res) => {
-  const { classId, limit = 50 } = req.query
+  const { classId, page = 1, pageSize = 20 } = req.query
+  const offset = (Number(page) - 1) * Number(pageSize)
+  
+  let countQuery = 'SELECT COUNT(*) as total FROM evaluation_records er'
   let query = 'SELECT er.*, s.name as student_name FROM evaluation_records er JOIN students s ON er.student_id = s.id'
   const params = []
+  const countParams = []
   
   if (classId) {
     query += ' WHERE er.class_id = ?'
+    countQuery += ' WHERE class_id = ?'
     params.push(classId)
+    countParams.push(classId)
   }
   
-  query += ' ORDER BY er.timestamp DESC LIMIT ?'
-  params.push(Number(limit))
+  // Get total count
+  const totalResult = db.prepare(countQuery).get(...countParams)
+  const total = totalResult?.total || 0
+  
+  // Get paginated records
+  query += ' ORDER BY er.timestamp DESC LIMIT ? OFFSET ?'
+  params.push(Number(pageSize), offset)
   
   const records = db.prepare(query).all(...params)
-  res.json({ records })
+  res.json({ 
+    records, 
+    total,
+    page: Number(page),
+    pageSize: Number(pageSize),
+    totalPages: Math.ceil(total / Number(pageSize))
+  })
 })
 
 // Ranking

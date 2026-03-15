@@ -400,21 +400,39 @@ async function quickAdd(student: Student | null, rule: Rule) {
 
 async function loadEvaluationRecords() {
   if (!currentClass.value) return
-  const res = await api.get(`/evaluations?classId=${currentClass.value.id}&limit=200`)
+  const res = await api.get(`/evaluations?classId=${currentClass.value.id}&page=${recordsPage.value}&pageSize=${recordsPageSize}`)
   evaluationRecords.value = res.data.records
-  totalRecords.value = res.data.records.length
-  recordsPage.value = 1
+  totalRecords.value = res.data.total
 }
 
 const paginatedRecords = computed(() => {
-  const start = (recordsPage.value - 1) * recordsPageSize
-  const end = start + recordsPageSize
-  return evaluationRecords.value.slice(start, end)
+  return evaluationRecords.value
 })
 
 const totalPages = computed(() => {
   return Math.ceil(totalRecords.value / recordsPageSize)
 })
+
+function prevPage() {
+  if (recordsPage.value > 1) {
+    recordsPage.value--
+    loadEvaluationRecords()
+  }
+}
+
+function nextPage() {
+  if (recordsPage.value < totalPages.value) {
+    recordsPage.value++
+    loadEvaluationRecords()
+  }
+}
+
+function goToPage(page: number) {
+  if (page >= 1 && page <= totalPages.value) {
+    recordsPage.value = page
+    loadEvaluationRecords()
+  }
+}
 
 async function undoLastEvaluation() {
   if (!currentClass.value) return
@@ -974,7 +992,7 @@ onMounted(() => {
         
         <div v-else class="space-y-2">
           <div 
-            v-for="record in evaluationRecords" 
+            v-for="record in paginatedRecords" 
             :key="record.id"
             class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
           >
@@ -991,6 +1009,38 @@ onMounted(() => {
                 {{ record.points > 0 ? '+' : '' }}{{ record.points }}
               </span>
             </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t">
+          <div class="text-sm text-gray-500">
+            共 {{ totalRecords }} 条，第 {{ recordsPage }}/{{ totalPages }} 页
+          </div>
+          <div class="flex gap-2">
+            <button 
+              @click="prevPage"
+              :disabled="recordsPage <= 1"
+              class="px-3 py-1 rounded-lg border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              上一页
+            </button>
+            <button 
+              v-for="page in totalPages" 
+              :key="page"
+              @click="goToPage(page)"
+              class="px-3 py-1 rounded-lg text-sm min-w-[32px]"
+              :class="recordsPage === page ? 'bg-primary text-white' : 'border hover:bg-gray-50'"
+            >
+              {{ page }}
+            </button>
+            <button 
+              @click="nextPage"
+              :disabled="recordsPage >= totalPages"
+              class="px-3 py-1 rounded-lg border text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              下一页
+            </button>
           </div>
         </div>
 

@@ -212,15 +212,6 @@ if (rulesCount && rulesCount.count === 0) {
   for (const rule of defaultRules) {
     insertRule.run(rule.id, rule.name, rule.points, rule.category, now)
   }
-} uuidv4(), name: '说脏话、骂人', points: -2, category: '行为' },
-    { id: uuidv4(), name: '欺负同学', points: -10, category: '行为' },
-  ]
-  
-  const insertRule = db.prepare('INSERT INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, 0, ?)')
-  const now = Date.now()
-  for (const rule of defaultRules) {
-    insertRule.run(rule.id, rule.name, rule.points, rule.category, now)
-  }
 }
 
 // Initialize level config

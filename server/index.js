@@ -380,6 +380,81 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() })
 })
 
+// Backup
+app.get('/api/backup', (req, res) => {
+  const backup = {
+    version: '1.0.0',
+    exportedAt: new Date().toISOString(),
+    classes: db.prepare('SELECT * FROM classes').all(),
+    students: db.prepare('SELECT * FROM students').all(),
+    rules: db.prepare('SELECT * FROM evaluation_rules').all(),
+    records: db.prepare('SELECT * FROM evaluation_records').all(),
+    badges: db.prepare('SELECT * FROM badges').all(),
+    settings: db.prepare('SELECT * FROM settings').all()
+  }
+  res.setHeader('Content-Disposition', `attachment; filename="pet-garden-backup-${Date.now()}.json"`)
+  res.json(backup)
+})
+
+// Restore
+app.post('/api/restore', (req, res) => {
+  const { classes, students, rules, records, badges, settings } = req.body
+  
+  if (!classes || !students) {
+    return res.status(400).json({ error: 'Invalid backup data' })
+  }
+  
+  try {
+    // Clear existing data
+    db.exec('DELETE FROM evaluation_records')
+    db.exec('DELETE FROM badges')
+    db.exec('DELETE FROM students')
+    db.exec('DELETE FROM classes')
+    db.exec('DELETE FROM evaluation_rules WHERE is_custom = 1')
+    
+    // Restore classes
+    const insertClass = db.prepare('INSERT INTO classes (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')
+    for (const c of classes) {
+      insertClass.run(c.id, c.name, c.created_at, c.updated_at)
+    }
+    
+    // Restore students
+    const insertStudent = db.prepare('INSERT INTO students (id, class_id, name, student_no, total_points, pet_type, pet_level, pet_exp, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    for (const s of students) {
+      insertStudent.run(s.id, s.class_id, s.name, s.student_no, s.total_points, s.pet_type, s.pet_level, s.pet_exp, s.created_at)
+    }
+    
+    // Restore custom rules
+    if (rules) {
+      const insertRule = db.prepare('INSERT INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      for (const r of rules.filter(r => r.is_custom)) {
+        insertRule.run(r.id, r.name, r.points, r.category, r.is_custom, r.created_at)
+      }
+    }
+    
+    // Restore records
+    if (records) {
+      const insertRecord = db.prepare('INSERT INTO evaluation_records (id, class_id, student_id, points, reason, category, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      for (const r of records) {
+        insertRecord.run(r.id, r.class_id, r.student_id, r.points, r.reason, r.category, r.timestamp)
+      }
+    }
+    
+    // Restore badges
+    if (badges) {
+      const insertBadge = db.prepare('INSERT INTO badges (id, student_id, pet_type, earned_at) VALUES (?, ?, ?, ?)')
+      for (const b of badges) {
+        insertBadge.run(b.id, b.student_id, b.pet_type, b.earned_at)
+      }
+    }
+    
+    res.json({ success: true, message: '数据恢复成功' })
+  } catch (error) {
+    console.error('Restore error:', error)
+    res.status(500).json({ error: '恢复失败' })
+  }
+})
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 })

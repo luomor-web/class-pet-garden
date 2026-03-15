@@ -324,6 +324,46 @@ async function deleteRule(id: string) {
   }
 }
 
+async function exportBackup() {
+  try {
+    const res = await api.get('/backup', { responseType: 'blob' })
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `pet-garden-backup-${Date.now()}.json`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    alert('备份导出成功！')
+  } catch (error) {
+    console.error('导出失败:', error)
+    alert('导出失败')
+  }
+}
+
+async function importBackup(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  
+  if (!confirm('导入将覆盖现有数据，确定继续？')) {
+    (event.target as HTMLInputElement).value = ''
+    return
+  }
+  
+  try {
+    const text = await file.text()
+    const data = JSON.parse(text)
+    await api.post('/restore', data)
+    alert('数据恢复成功！')
+    await loadClasses()
+    await loadRules()
+  } catch (error) {
+    console.error('导入失败:', error)
+    alert('导入失败，请确保文件格式正确')
+  }
+  (event.target as HTMLInputElement).value = ''
+}
+
 function getStudentPetImage(student: Student): string {
   if (!student.pet_type) return ''
   const pet = getPetType(student.pet_type)
@@ -390,6 +430,18 @@ onMounted(() => {
         >
           ⚙️ 管理规则
         </button>
+        
+        <button 
+          @click="exportBackup"
+          class="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm"
+        >
+          💾 导出备份
+        </button>
+        
+        <label class="w-full text-left px-3 py-2 rounded hover:bg-gray-100 text-sm cursor-pointer block">
+          📥 导入恢复
+          <input type="file" accept=".json" @change="importBackup" class="hidden" />
+        </label>
       </div>
       
       <!-- Class Selector -->
@@ -506,7 +558,7 @@ onMounted(() => {
               <div class="bg-gray-200 rounded-full h-1.5">
                 <div 
                   class="bg-primary rounded-full h-1.5 transition-all"
-                  :style="{ width: `${Math.min(100, (getLevelProgress(student.pet_exp).current / getLevelProgress(student.pet_exp).required) * 100)}%` }"
+                  :style="{ width: `${getLevelProgress(student.pet_exp).percentage}%` }"
                 ></div>
               </div>
             </div>

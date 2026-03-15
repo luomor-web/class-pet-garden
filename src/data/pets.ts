@@ -62,13 +62,25 @@ export function calculateLevel(exp: number): number {
 }
 
 // 获取当前等级进度
-export function getLevelProgress(exp: number): { current: number; required: number } {
+export function getLevelProgress(exp: number): { current: number; required: number; percentage: number } {
+  if (!exp || exp <= 0) {
+    return { current: 0, required: LEVEL_CONFIG[0], percentage: 0 }
+  }
+  
   let total = 0
   for (let i = 0; i < LEVEL_CONFIG.length; i++) {
-    if (exp < total + LEVEL_CONFIG[i]) {
-      return { current: exp - total, required: LEVEL_CONFIG[i] }
+    const levelTotal = total + LEVEL_CONFIG[i]
+    if (exp < levelTotal) {
+      const current = exp - total
+      return { 
+        current, 
+        required: LEVEL_CONFIG[i], 
+        percentage: Math.round((current / LEVEL_CONFIG[i]) * 100) 
+      }
     }
-    total += LEVEL_CONFIG[i]
+    total = levelTotal
   }
-  return { current: LEVEL_CONFIG[LEVEL_CONFIG.length - 1], required: LEVEL_CONFIG[LEVEL_CONFIG.length - 1] }
+  
+  // Max level reached
+  return { current: LEVEL_CONFIG[LEVEL_CONFIG.length - 1], required: LEVEL_CONFIG[LEVEL_CONFIG.length - 1], percentage: 100 }
 }

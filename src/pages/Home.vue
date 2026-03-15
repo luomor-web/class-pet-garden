@@ -990,7 +990,7 @@ onMounted(() => {
           暂无记录
         </div>
         
-        <div v-else class="grid grid-cols-4 gap-3">
+        <div v-else class="grid grid-cols-3 gap-3">
           <div 
             v-for="record in paginatedRecords" 
             :key="record.id"

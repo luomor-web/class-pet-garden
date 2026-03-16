@@ -1,0 +1,24 @@
+{
+  "regenerated": [
+    {
+      "level": 1,
+      "status": "regenerated"
+    },
+    {
+      "level": 4,
+      "status": "regenerated"
+    },
+    {
+      "level": 6,
+      "status": "regenerated"
+    },
+    {
+      "level": 8,
+      "status": "regenerated"
+    }
+  ],
+  "still_failed": [],
+  "total": 4,
+  "success": 4,
+  "failed": 0
+}

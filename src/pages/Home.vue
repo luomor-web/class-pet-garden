@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
 import axios from 'axios'
-import { PET_TYPES, getPetType, getLevelProgress, calculateLevel } from '@/data/pets'
+import { PET_TYPES, getPetType, getLevelProgress, calculateLevel, getPetLevelImage, getPetLevel1Image } from '@/data/pets'
 
 // 配置 axios baseURL
 const api = axios.create({
@@ -689,8 +689,8 @@ async function importBackup(event: Event) {
 
 function getStudentPetImage(student: Student): string {
   if (!student.pet_type) return ''
-  const pet = getPetType(student.pet_type)
-  return pet?.image || ''
+  // 根据学生当前等级显示对应等级的宠物图片
+  return getPetLevelImage(student.pet_type, student.pet_level)
 }
 
 // Initialize
@@ -1282,7 +1282,7 @@ onMounted(async () => {
               @click="selectPet(pet.id)"
               class="bg-gradient-to-br from-orange-50 to-pink-50 rounded-2xl p-4 hover:shadow-lg hover:scale-105 transition-all text-center group border-2 border-transparent hover:border-orange-200"
             >
-              <img :src="pet.image" class="w-16 h-16 mx-auto object-contain group-hover:scale-110 transition-transform" />
+              <img :src="getPetLevel1Image(pet.id)" class="w-16 h-16 mx-auto object-contain group-hover:scale-110 transition-transform" />
               <div class="text-sm font-bold mt-2 text-gray-700 group-hover:text-orange-500 transition-colors">{{ pet.name }}</div>
             </button>
           </div>

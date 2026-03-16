@@ -1,0 +1,122 @@
+[
+  {
+    "level": 1,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv1.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 227.78,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 2,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv2.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 292.92,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 3,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv3.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 321.42,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 4,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv4.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 319.58,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 5,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv5.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 258.73,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 6,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv6.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 246.78,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 7,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv7.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 279.22,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  },
+  {
+    "level": 8,
+    "path": "/root/.openclaw/workspace/projects/class-pet-garden/public/pets/cat/lv8.png",
+    "exists": true,
+    "readable": true,
+    "size": null,
+    "dimensions": [
+      512,
+      512
+    ],
+    "file_size_kb": 301.03,
+    "issues": [],
+    "status": "passed",
+    "format": "PNG"
+  }
+]

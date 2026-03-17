@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
-import axios from 'axios'
 import { PET_TYPES, getPetType, getLevelProgress, calculateLevel, getPetLevelImage, getPetLevel1Image } from '@/data/pets'
 import PetImage from '@/components/PetImage.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import AuthModal from '@/components/AuthModal.vue'
 import { useToast } from '@/composables/useToast'
 import { useAuth } from '@/composables/useAuth'
-
-// 配置 axios baseURL
-const api = axios.create({
-  baseURL: '/pet-garden/api'
-})
 
 // Types
 interface Class {

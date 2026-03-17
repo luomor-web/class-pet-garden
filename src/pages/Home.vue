@@ -1716,13 +1716,13 @@ onMounted(async () => {
               </button>
             </div>
             <!-- 规则按钮 - 每行5个，固定5行高度 -->
-            <div class="h-[375px] overflow-y-auto pr-1 custom-scrollbar">
+            <div class="h-[400px] overflow-y-auto pr-1 custom-scrollbar">
               <div class="grid grid-cols-5 gap-2 content-start">
                 <button 
                   v-for="rule in rules.filter(r => r.category === detailEvalTab)" 
                   :key="rule.id"
                   @click="detailQuickAdd(rule)"
-                  class="rounded-xl p-2 text-center transition-all border-2 hover:scale-105 active:scale-95 h-[70px]"
+                  class="rounded-xl p-2 text-center transition-all border-2 hover:scale-105 active:scale-95 h-[75px]"
                   :class="rule.points > 0 
                     ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:border-green-400' 
                     : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200 hover:border-red-400'"

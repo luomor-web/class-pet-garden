@@ -270,27 +270,77 @@ if (!levelConfig) {
 
 // === API Routes ===
 
+// 验证班级归属的辅助函数
+function verifyClassOwnership(req, res, next) {
+  const classId = req.params.classId || req.body.classId
+  if (!classId) {
+    return res.status(400).json({ error: '缺少班级ID' })
+  }
+  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
+  if (!cls) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (cls.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问此班级' })
+  }
+  req.classId = classId
+  next()
+}
+
 // Students
-app.get('/api/classes/:classId/students', (req, res) => {
+app.get('/api/classes/:classId/students', authMiddleware, verifyClassOwnership, (req, res) => {
   const students = db.prepare('SELECT * FROM students WHERE class_id = ? ORDER BY name').all(req.params.classId)
   res.json({ students })
 })
 
-app.post('/api/students', (req, res) => {
+app.post('/api/students', authMiddleware, (req, res) => {
   const { classId, name, studentNo } = req.body
+  
+  // 验证班级归属
+  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
+  if (!cls) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (cls.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问此班级' })
+  }
+  
   const id = uuidv4()
   const now = Date.now()
   db.prepare('INSERT INTO students (id, class_id, name, student_no, total_points, pet_level, pet_exp, created_at) VALUES (?, ?, ?, ?, 0, 1, 0, ?)').run(id, classId, name, studentNo || null, now)
   res.json({ id, class_id: classId, name, student_no: studentNo || null, total_points: 0, pet_level: 1, pet_exp: 0, created_at: now })
 })
 
-app.put('/api/students/:id', (req, res) => {
+app.put('/api/students/:id', authMiddleware, (req, res) => {
   const { name, studentNo } = req.body
+  
+  // 验证学生归属
+  const student = db.prepare(`
+    SELECT s.* FROM students s
+    JOIN classes c ON s.class_id = c.id
+    WHERE s.id = ? AND c.user_id = ?
+  `).get(req.params.id, req.userId)
+  
+  if (!student) {
+    return res.status(404).json({ error: '学生不存在或无权访问' })
+  }
+  
   db.prepare('UPDATE students SET name = ?, student_no = ? WHERE id = ?').run(name, studentNo || null, req.params.id)
   res.json({ success: true })
 })
 
-app.delete('/api/students/:id', (req, res) => {
+app.delete('/api/students/:id', authMiddleware, (req, res) => {
+  // 验证学生归属
+  const student = db.prepare(`
+    SELECT s.* FROM students s
+    JOIN classes c ON s.class_id = c.id
+    WHERE s.id = ? AND c.user_id = ?
+  `).get(req.params.id, req.userId)
+  
+  if (!student) {
+    return res.status(404).json({ error: '学生不存在或无权访问' })
+  }
+  
   // 先删除相关的评价记录
   db.prepare('DELETE FROM evaluation_records WHERE student_id = ?').run(req.params.id)
   // 再删除学生
@@ -299,10 +349,19 @@ app.delete('/api/students/:id', (req, res) => {
 })
 
 // Batch import students
-app.post('/api/students/import', (req, res) => {
+app.post('/api/students/import', authMiddleware, (req, res) => {
   const { classId, students } = req.body
   if (!classId || !students || !Array.isArray(students)) {
     return res.status(400).json({ error: 'Invalid input' })
+  }
+  
+  // 验证班级归属
+  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
+  if (!cls) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (cls.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问此班级' })
   }
   
   const now = Date.now()
@@ -321,14 +380,19 @@ app.post('/api/students/import', (req, res) => {
 })
 
 // Pet
-app.put('/api/students/:id/pet', (req, res) => {
+app.put('/api/students/:id/pet', authMiddleware, (req, res) => {
   const { petType } = req.body
   const now = Date.now()
   
-  // Get current student
-  const student = db.prepare('SELECT * FROM students WHERE id = ?').get(req.params.id)
+  // 验证学生归属
+  const student = db.prepare(`
+    SELECT s.* FROM students s
+    JOIN classes c ON s.class_id = c.id
+    WHERE s.id = ? AND c.user_id = ?
+  `).get(req.params.id, req.userId)
+  
   if (!student) {
-    return res.status(404).json({ error: 'Student not found' })
+    return res.status(404).json({ error: '学生不存在或无权访问' })
   }
   
   // If student already has a pet, create a badge for it if level is 8
@@ -343,13 +407,13 @@ app.put('/api/students/:id/pet', (req, res) => {
   res.json({ success: true, petType, petLevel: student.pet_level, petExp: student.pet_exp })
 })
 
-// Evaluation Rules
+// Evaluation Rules (只读无需认证，修改需要认证)
 app.get('/api/rules', (req, res) => {
   const rules = db.prepare('SELECT * FROM evaluation_rules ORDER BY category, points DESC').all()
   res.json({ rules })
 })
 
-app.post('/api/rules', (req, res) => {
+app.post('/api/rules', authMiddleware, (req, res) => {
   const { name, points, category } = req.body
   const id = uuidv4()
   const now = Date.now()
@@ -357,14 +421,21 @@ app.post('/api/rules', (req, res) => {
   res.json({ id, name, points, category, is_custom: 1, created_at: now })
 })
 
-app.delete('/api/rules/:id', (req, res) => {
+app.delete('/api/rules/:id', authMiddleware, (req, res) => {
   db.prepare('DELETE FROM evaluation_rules WHERE id = ? AND is_custom = 1').run(req.params.id)
   res.json({ success: true })
 })
 
 // Evaluations
-app.post('/api/evaluations', (req, res) => {
+app.post('/api/evaluations', authMiddleware, (req, res) => {
   const { classId, studentId, points, reason, category } = req.body
+  
+  // 验证班级归属
+  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
+  if (!cls || cls.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问此班级' })
+  }
+  
   const id = uuidv4()
   const now = Date.now()
   
@@ -410,10 +481,16 @@ app.post('/api/evaluations', (req, res) => {
 })
 
 // Undo last evaluation
-app.delete('/api/evaluations/latest', (req, res) => {
+app.delete('/api/evaluations/latest', authMiddleware, (req, res) => {
   const { classId } = req.query
   if (!classId) {
     return res.status(400).json({ error: 'classId required' })
+  }
+  
+  // 验证班级归属
+  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
+  if (!cls || cls.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问此班级' })
   }
   
   // Get latest record
@@ -442,11 +519,16 @@ app.delete('/api/evaluations/latest', (req, res) => {
 })
 
 // 删除指定评价记录
-app.delete('/api/evaluations/:id', (req, res) => {
+app.delete('/api/evaluations/:id', authMiddleware, (req, res) => {
   const { id } = req.params
   
   // Get record
-  const record = db.prepare('SELECT * FROM evaluation_records WHERE id = ?').get(id)
+  const record = db.prepare(`
+    SELECT er.* FROM evaluation_records er
+    JOIN classes c ON er.class_id = c.id
+    WHERE er.id = ? AND c.user_id = ?
+  `).get(id, req.userId)
+  
   if (!record) {
     return res.status(404).json({ error: 'Record not found' })
   }
@@ -470,17 +552,21 @@ app.delete('/api/evaluations/:id', (req, res) => {
   res.json({ success: true, undone: record })
 })
 
-app.get('/api/evaluations', (req, res) => {
+app.get('/api/evaluations', authMiddleware, (req, res) => {
   const { classId, studentId, page = 1, pageSize = 20 } = req.query
   const offset = (Number(page) - 1) * Number(pageSize)
   
-  let countQuery = 'SELECT COUNT(*) as total FROM evaluation_records er'
-  let query = 'SELECT er.*, s.name as student_name FROM evaluation_records er JOIN students s ON er.student_id = s.id'
+  let countQuery = 'SELECT COUNT(*) as total FROM evaluation_records er JOIN classes c ON er.class_id = c.id'
+  let query = 'SELECT er.*, s.name as student_name FROM evaluation_records er JOIN students s ON er.student_id = s.id JOIN classes c ON er.class_id = c.id'
   const params = []
   const countParams = []
   
+  // 始终添加用户过滤
+  params.push(req.userId)
+  countParams.push(req.userId)
+  
   // 支持按班级或学生筛选
-  const conditions = []
+  const conditions = ['c.user_id = ?']
   if (classId) {
     conditions.push('er.class_id = ?')
     params.push(classId)
@@ -492,10 +578,8 @@ app.get('/api/evaluations', (req, res) => {
     countParams.push(studentId)
   }
   
-  if (conditions.length > 0) {
-    query += ' WHERE ' + conditions.join(' AND ')
-    countQuery += ' WHERE ' + conditions.join(' AND ')
-  }
+  query += ' WHERE ' + conditions.join(' AND ')
+  countQuery += ' WHERE ' + conditions.join(' AND ')
   
   // Get total count
   const totalResult = db.prepare(countQuery).get(...countParams)
@@ -516,7 +600,7 @@ app.get('/api/evaluations', (req, res) => {
 })
 
 // Ranking
-app.get('/api/classes/:classId/ranking', (req, res) => {
+app.get('/api/classes/:classId/ranking', authMiddleware, verifyClassOwnership, (req, res) => {
   const ranking = db.prepare(`
     SELECT s.*, 
            (SELECT COUNT(*) FROM badges WHERE student_id = s.id) as badge_count
@@ -527,7 +611,7 @@ app.get('/api/classes/:classId/ranking', (req, res) => {
   res.json({ ranking })
 })
 
-// Settings
+// Settings (只读)
 app.get('/api/settings', (req, res) => {
   const settings = db.prepare('SELECT * FROM settings').all()
   const result = {}
@@ -537,28 +621,45 @@ app.get('/api/settings', (req, res) => {
   res.json(result)
 })
 
-// Health
+// Health (公开)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() })
 })
 
 // Fix pet_exp for existing students
-app.post('/api/fix-exp', (req, res) => {
-  // Sync pet_exp with total_points for students with pets
-  const result = db.prepare('UPDATE students SET pet_exp = MAX(0, total_points) WHERE pet_type IS NOT NULL').run()
+app.post('/api/fix-exp', authMiddleware, (req, res) => {
+  // Sync pet_exp with total_points for students with pets (只处理当前用户的班级)
+  const result = db.prepare(`
+    UPDATE students SET pet_exp = MAX(0, total_points) 
+    WHERE pet_type IS NOT NULL 
+    AND class_id IN (SELECT id FROM classes WHERE user_id = ?)
+  `).run(req.userId)
   res.json({ success: true, updated: result.changes })
 })
 
 // Backup
-app.get('/api/backup', (req, res) => {
+app.get('/api/backup', authMiddleware, (req, res) => {
   const backup = {
     version: '1.0.0',
     exportedAt: new Date().toISOString(),
-    classes: db.prepare('SELECT * FROM classes').all(),
-    students: db.prepare('SELECT * FROM students').all(),
+    classes: db.prepare('SELECT * FROM classes WHERE user_id = ?').all(req.userId),
+    students: db.prepare(`
+      SELECT s.* FROM students s
+      JOIN classes c ON s.class_id = c.id
+      WHERE c.user_id = ?
+    `).all(req.userId),
     rules: db.prepare('SELECT * FROM evaluation_rules').all(),
-    records: db.prepare('SELECT * FROM evaluation_records').all(),
-    badges: db.prepare('SELECT * FROM badges').all(),
+    records: db.prepare(`
+      SELECT er.* FROM evaluation_records er
+      JOIN classes c ON er.class_id = c.id
+      WHERE c.user_id = ?
+    `).all(req.userId),
+    badges: db.prepare(`
+      SELECT b.* FROM badges b
+      JOIN students s ON b.student_id = s.id
+      JOIN classes c ON s.class_id = c.id
+      WHERE c.user_id = ?
+    `).all(req.userId),
     settings: db.prepare('SELECT * FROM settings').all()
   }
   res.setHeader('Content-Disposition', `attachment; filename="pet-garden-backup-${Date.now()}.json"`)
@@ -566,7 +667,7 @@ app.get('/api/backup', (req, res) => {
 })
 
 // Restore
-app.post('/api/restore', (req, res) => {
+app.post('/api/restore', authMiddleware, (req, res) => {
   const { classes, students, rules, records, badges, settings } = req.body
   
   if (!classes || !students) {
@@ -574,17 +675,16 @@ app.post('/api/restore', (req, res) => {
   }
   
   try {
-    // Clear existing data
-    db.exec('DELETE FROM evaluation_records')
-    db.exec('DELETE FROM badges')
-    db.exec('DELETE FROM students')
-    db.exec('DELETE FROM classes')
-    db.exec('DELETE FROM evaluation_rules WHERE is_custom = 1')
+    // Clear existing data for current user
+    db.prepare('DELETE FROM evaluation_records WHERE class_id IN (SELECT id FROM classes WHERE user_id = ?)').run(req.userId)
+    db.prepare('DELETE FROM badges WHERE student_id IN (SELECT s.id FROM students s JOIN classes c ON s.class_id = c.id WHERE c.user_id = ?)').run(req.userId)
+    db.prepare('DELETE FROM students WHERE class_id IN (SELECT id FROM classes WHERE user_id = ?)').run(req.userId)
+    db.prepare('DELETE FROM classes WHERE user_id = ?').run(req.userId)
     
-    // Restore classes
-    const insertClass = db.prepare('INSERT INTO classes (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)')
+    // Restore classes (关联当前用户)
+    const insertClass = db.prepare('INSERT INTO classes (id, user_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
     for (const c of classes) {
-      insertClass.run(c.id, c.name, c.created_at, c.updated_at)
+      insertClass.run(c.id, req.userId, c.name, c.created_at, c.updated_at)
     }
     
     // Restore students
@@ -595,7 +695,7 @@ app.post('/api/restore', (req, res) => {
     
     // Restore custom rules
     if (rules) {
-      const insertRule = db.prepare('INSERT INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      const insertRule = db.prepare('INSERT OR IGNORE INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, ?, ?)')
       for (const r of rules.filter(r => r.is_custom)) {
         insertRule.run(r.id, r.name, r.points, r.category, r.is_custom, r.created_at)
       }

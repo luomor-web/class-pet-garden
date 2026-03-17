@@ -18,35 +18,42 @@ function generateLevelImages(petId: string): Record<number, string> {
   return images
 }
 
+// 获取默认图片（等级1）
+function getDefaultImage(petId: string): string {
+  return `/pet-garden/pets/${petId}/lv1.png`
+}
+
 // 宠物配置
 export const PET_TYPES: PetType[] = [
   // 普通动物
-  { id: 'west-highland', name: '西高地', category: 'normal', image: '/pet-garden/images/pets/normal/west-highland.png', levelImages: generateLevelImages('west-highland') },
-  { id: 'bichon', name: '比熊', category: 'normal', image: '/pet-garden/images/pets/normal/bichon.png', levelImages: generateLevelImages('bichon') },
-  { id: 'border-collie', name: '边牧', category: 'normal', image: '/pet-garden/images/pets/normal/border-collie.png', levelImages: generateLevelImages('border-collie') },
-  { id: 'shiba', name: '柴犬', category: 'normal', image: '/pet-garden/images/pets/normal/shiba.png', levelImages: generateLevelImages('shiba') },
-  { id: 'golden-retriever', name: '金毛', category: 'normal', image: '/pet-garden/images/pets/normal/golden-retriever.png', levelImages: generateLevelImages('golden-retriever') },
-  { id: 'samoyed', name: '萨摩耶', category: 'normal', image: '/pet-garden/images/pets/normal/samoyed.png', levelImages: generateLevelImages('samoyed') },
-  { id: 'husky', name: '哈士奇', category: 'normal', image: '/pet-garden/images/pets/normal/husky.png', levelImages: generateLevelImages('husky') },
-  { id: 'tabby-cat', name: '虎斑猫', category: 'normal', image: '/pet-garden/images/pets/normal/tabby-cat.png', levelImages: generateLevelImages('tabby-cat') },
-  { id: 'persian-cat', name: '波斯猫', category: 'normal', image: '/pet-garden/images/pets/normal/persian-cat.png', levelImages: generateLevelImages('persian-cat') },
-  { id: 'ragdoll-cat', name: '布偶猫', category: 'normal', image: '/pet-garden/images/pets/normal/ragdoll-cat.png', levelImages: generateLevelImages('ragdoll-cat') },
-  { id: 'orange-cat', name: '橘猫', category: 'normal', image: '/pet-garden/images/pets/normal/orange-cat.png', levelImages: generateLevelImages('orange-cat') },
-  { id: 'lop-rabbit', name: '垂耳兔', category: 'normal', image: '/pet-garden/images/pets/normal/lop-rabbit.png', levelImages: generateLevelImages('lop-rabbit') },
-  { id: 'angora-rabbit', name: '安哥拉兔', category: 'normal', image: '/pet-garden/images/pets/normal/angora-rabbit.png', levelImages: generateLevelImages('angora-rabbit') },
-  { id: 'hamster', name: '仓鼠', category: 'normal', image: '/pet-garden/images/pets/normal/hamster.png', levelImages: generateLevelImages('hamster') },
-  { id: 'winter-hamster', name: '银狐仓鼠', category: 'normal', image: '/pet-garden/images/pets/normal/winter-hamster.png', levelImages: generateLevelImages('winter-hamster') },
-  { id: 'call-duck', name: '柯尔鸭', category: 'normal', image: '/pet-garden/images/pets/normal/call-duck.png', levelImages: generateLevelImages('call-duck') },
-  { id: 'alpaca', name: '羊驼', category: 'normal', image: '/pet-garden/images/pets/normal/alpaca.png', levelImages: generateLevelImages('alpaca') },
-  { id: 'red-panda', name: '小熊猫', category: 'normal', image: '/pet-garden/images/pets/normal/red-panda.png', levelImages: generateLevelImages('red-panda') },
-  { id: 'corgi', name: '柯基', category: 'normal', image: '/pet-garden/images/pets/normal/corgi.png', levelImages: generateLevelImages('corgi') },
+  { id: 'west-highland', name: '西高地', category: 'normal', image: getDefaultImage('west-highland'), levelImages: generateLevelImages('west-highland') },
+  { id: 'bichon', name: '比熊', category: 'normal', image: getDefaultImage('bichon'), levelImages: generateLevelImages('bichon') },
+  { id: 'border-collie', name: '边牧', category: 'normal', image: getDefaultImage('border-collie'), levelImages: generateLevelImages('border-collie') },
+  { id: 'shiba', name: '柴犬', category: 'normal', image: getDefaultImage('shiba'), levelImages: generateLevelImages('shiba') },
+  { id: 'golden-retriever', name: '金毛', category: 'normal', image: getDefaultImage('golden-retriever'), levelImages: generateLevelImages('golden-retriever') },
+  { id: 'samoyed', name: '萨摩耶', category: 'normal', image: getDefaultImage('samoyed'), levelImages: generateLevelImages('samoyed') },
+  { id: 'husky', name: '哈士奇', category: 'normal', image: getDefaultImage('husky'), levelImages: generateLevelImages('husky') },
+  { id: 'tabby-cat', name: '虎斑猫', category: 'normal', image: getDefaultImage('tabby-cat'), levelImages: generateLevelImages('tabby-cat') },
+  { id: 'persian-cat', name: '波斯猫', category: 'normal', image: getDefaultImage('persian-cat'), levelImages: generateLevelImages('persian-cat') },
+  { id: 'ragdoll-cat', name: '布偶猫', category: 'normal', image: getDefaultImage('ragdoll-cat'), levelImages: generateLevelImages('ragdoll-cat') },
+  { id: 'orange-cat', name: '橘猫', category: 'normal', image: getDefaultImage('orange-cat'), levelImages: generateLevelImages('orange-cat') },
+  { id: 'lop-rabbit', name: '垂耳兔', category: 'normal', image: getDefaultImage('lop-rabbit'), levelImages: generateLevelImages('lop-rabbit') },
+  { id: 'angora-rabbit', name: '安哥拉兔', category: 'normal', image: getDefaultImage('angora-rabbit'), levelImages: generateLevelImages('angora-rabbit') },
+  { id: 'hamster', name: '仓鼠', category: 'normal', image: getDefaultImage('hamster'), levelImages: generateLevelImages('hamster') },
+  { id: 'winter-hamster', name: '银狐仓鼠', category: 'normal', image: getDefaultImage('winter-hamster'), levelImages: generateLevelImages('winter-hamster') },
+  { id: 'call-duck', name: '柯尔鸭', category: 'normal', image: getDefaultImage('call-duck'), levelImages: generateLevelImages('call-duck') },
+  { id: 'alpaca', name: '羊驼', category: 'normal', image: getDefaultImage('alpaca'), levelImages: generateLevelImages('alpaca') },
+  { id: 'red-panda', name: '小熊猫', category: 'normal', image: getDefaultImage('red-panda'), levelImages: generateLevelImages('red-panda') },
+  { id: 'corgi', name: '柯基', category: 'normal', image: getDefaultImage('corgi'), levelImages: generateLevelImages('corgi') },
   
   // 神兽
-  { id: 'white-tiger', name: '白虎', category: 'mythical', image: '/pet-garden/images/pets/mythical/white-tiger.png', levelImages: generateLevelImages('white-tiger') },
-  { id: 'unicorn', name: '独角兽', category: 'mythical', image: '/pet-garden/images/pets/mythical/unicorn.png', levelImages: generateLevelImages('unicorn') },
-  { id: 'azure-dragon', name: '青龙', category: 'mythical', image: '/pet-garden/images/pets/mythical/azure-dragon.png', levelImages: generateLevelImages('azure-dragon') },
-  { id: 'vermilion-bird', name: '朱雀', category: 'mythical', image: '/pet-garden/images/pets/mythical/vermilion-bird.png', levelImages: generateLevelImages('vermilion-bird') },
-  { id: 'succulent-spirit', name: '多肉精灵', category: 'mythical', image: '/pet-garden/images/pets/mythical/succulent-spirit.png', levelImages: generateLevelImages('succulent-spirit') },
+  { id: 'white-tiger', name: '白虎', category: 'mythical', image: getDefaultImage('white-tiger'), levelImages: generateLevelImages('white-tiger') },
+  { id: 'unicorn', name: '独角兽', category: 'mythical', image: getDefaultImage('unicorn'), levelImages: generateLevelImages('unicorn') },
+  { id: 'azure-dragon', name: '青龙', category: 'mythical', image: getDefaultImage('azure-dragon'), levelImages: generateLevelImages('azure-dragon') },
+  { id: 'vermilion-bird', name: '朱雀', category: 'mythical', image: getDefaultImage('vermilion-bird'), levelImages: generateLevelImages('vermilion-bird') },
+  { id: 'succulent-spirit', name: '多肉精灵', category: 'mythical', image: getDefaultImage('succulent-spirit'), levelImages: generateLevelImages('succulent-spirit') },
+  { id: 'pixiu', name: '貔貅', category: 'mythical', image: getDefaultImage('pixiu'), levelImages: generateLevelImages('pixiu') },
+  { id: 'suanni', name: '狻猊', category: 'mythical', image: getDefaultImage('suanni'), levelImages: generateLevelImages('suanni') },
 ]
 
 // 等级配置

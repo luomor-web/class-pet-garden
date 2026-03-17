@@ -1171,7 +1171,7 @@ onMounted(async () => {
             >
               <!-- 有宠物时使用 PetImage 组件 -->
               <template v-if="student.pet_type">
-                <div class="w-full h-full rounded-t-2xl overflow-hidden">
+                <div class="w-full h-full overflow-hidden" style="border-radius: 14px 14px 0 0; margin: -1px -1px 0 -1px; width: calc(100% + 2px);">
                   <PetImage
                     :src="getStudentPetImage(student)"
                     :alt="getPetType(student.pet_type)?.name"

@@ -51,6 +51,7 @@ const showRankModal = ref(false)
 const showPetModal = ref(false)
 const showRecordsModal = ref(false)
 const newClassName = ref('')
+const editingClass = ref<Class | null>(null)
 const newStudentName = ref('')
 const newStudentNo = ref('')
 const importText = ref('')
@@ -240,6 +241,43 @@ async function createClass() {
     console.error('创建班级失败:', error)
     alert('创建班级失败，请重试')
   }
+}
+
+async function updateClass() {
+  if (!newClassName.value.trim()) {
+    alert('请输入班级名称')
+    return
+  }
+  const classToEdit = editingClass.value
+  if (!classToEdit) return
+  try {
+    const newName = newClassName.value.trim()
+    await api.put(`/classes/${classToEdit.id}`, { name: newName })
+    // 如果当前选中的班级被修改，更新当前班级名称
+    if (currentClass.value?.id === classToEdit.id) {
+      currentClass.value = { ...currentClass.value, name: newName } as Class
+    }
+    newClassName.value = ''
+    editingClass.value = null
+    showClassModal.value = false
+    await loadClasses()
+  } catch (error) {
+    console.error('更新班级失败:', error)
+    alert('更新班级失败，请重试')
+  }
+}
+
+function openCreateClassModal() {
+  editingClass.value = null
+  newClassName.value = ''
+  showClassModal.value = true
+}
+
+function openEditClassModal() {
+  if (!currentClass.value) return
+  editingClass.value = currentClass.value
+  newClassName.value = currentClass.value.name
+  showClassModal.value = true
 }
 
 async function deleteClass(id: string) {
@@ -891,7 +929,8 @@ onMounted(async () => {
           <div v-if="showClassMenu" @click="showClassMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">
             <div v-if="showClassMenu" class="absolute right-0 top-full mt-1.5 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 w-40 z-50 overflow-hidden">
-              <button @click="showClassModal = true" class="w-full text-left px-3 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">➕ 新建</button>
+              <button @click="openCreateClassModal" class="w-full text-left px-3 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">➕ 新建</button>
+              <button v-if="currentClass" @click="openEditClassModal" class="w-full text-left px-3 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">✏️ 重命名</button>
               <button v-if="currentClass" @click="deleteClass(currentClass.id)" class="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors">🗑️ 删除</button>
               <hr class="my-1.5 border-gray-100">
               <button @click="exportBackup" class="w-full text-left px-3 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">💾 导出</button>
@@ -1148,24 +1187,24 @@ onMounted(async () => {
       </Transition>
     </main>
 
-    <!-- 创建班级模态框 -->
+    <!-- 创建/编辑班级模态框 -->
     <Transition name="modal">
       <div v-if="showClassModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-scale-in">
           <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
-            <span class="text-2xl">🏫</span> 创建班级
+            <span class="text-2xl">🏫</span> {{ editingClass ? '编辑班级' : '创建班级' }}
           </h3>
           <input 
             v-model="newClassName"
             type="text" 
             placeholder="输入班级名称..."
             class="w-full border-2 border-gray-200 rounded-xl px-5 py-3 mb-6 text-lg focus:outline-none focus:border-orange-400 transition-colors"
-            @keyup.enter="createClass"
+            @keyup.enter="editingClass ? updateClass() : createClass()"
           />
           <div class="flex gap-3 justify-end">
-            <button @click="showClassModal = false" class="px-6 py-3 text-gray-500 hover:text-gray-700 font-medium transition-colors">取消</button>
-            <button @click="createClass" class="bg-gradient-to-r from-orange-400 to-pink-500 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all">
-              创建
+            <button @click="showClassModal = false; editingClass = null; newClassName = ''" class="px-6 py-3 text-gray-500 hover:text-gray-700 font-medium transition-colors">取消</button>
+            <button @click="editingClass ? updateClass() : createClass()" class="bg-gradient-to-r from-orange-400 to-pink-500 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all">
+              {{ editingClass ? '保存' : '创建' }}
             </button>
           </div>
         </div>

@@ -1683,8 +1683,8 @@ onMounted(async () => {
                 {{ cat }}
               </button>
             </div>
-            <!-- 规则按钮 - 每行5个，固定3行高度 -->
-            <div class="h-[210px] overflow-y-auto pr-1 custom-scrollbar">
+            <!-- 规则按钮 - 每行5个，固定5行高度 -->
+            <div class="h-[345px] overflow-y-auto pr-1 custom-scrollbar">
               <div class="grid grid-cols-5 gap-2 content-start">
                 <button 
                   v-for="rule in rules.filter(r => r.category === detailEvalTab)" 

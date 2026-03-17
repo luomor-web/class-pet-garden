@@ -1271,13 +1271,13 @@ onMounted(async () => {
             </button>
           </div>
           
-          <!-- 规则网格 -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <!-- 规则网格 - 固定高度防止切换时跳变 -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 min-h-[320px]">
             <button 
               v-for="rule in currentCategoryRules" 
               :key="rule.id"
               @click="quickAdd(selectedStudent, rule); showAddModal = false"
-              class="rounded-2xl p-4 text-left transition-all border-2 hover:scale-105 hover:shadow-lg active:scale-95"
+              class="rounded-2xl p-4 text-left transition-all border-2 hover:scale-105 hover:shadow-lg active:scale-95 h-[100px]"
               :class="rule.points > 0 
                 ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:border-green-400' 
                 : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200 hover:border-red-400'"

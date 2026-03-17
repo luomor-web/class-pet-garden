@@ -1303,13 +1303,13 @@ onMounted(async () => {
           </div>
           
           <!-- 规则网格 - 固定5行高度，超出显示滚动条 -->
-          <div class="h-[540px] overflow-y-auto pr-2 custom-scrollbar">
+          <div class="h-[590px] overflow-y-auto pr-2 custom-scrollbar">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 content-start">
               <button 
                 v-for="rule in currentCategoryRules" 
                 :key="rule.id"
                 @click="quickAdd(selectedStudent, rule); showAddModal = false"
-                class="rounded-2xl p-4 text-left transition-all border-2 hover:scale-105 hover:shadow-lg active:scale-95 h-[100px]"
+                class="rounded-2xl p-4 text-left transition-all border-2 hover:scale-105 hover:shadow-lg active:scale-95 h-[110px]"
                 :class="rule.points > 0 
                   ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:border-green-400' 
                   : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200 hover:border-red-400'"
@@ -1328,7 +1328,7 @@ onMounted(async () => {
                     {{ rule.points > 0 ? '加分' : '扣分' }}
                   </span>
                 </div>
-                <div class="text-sm text-gray-700 font-medium">{{ rule.name }}</div>
+                <div class="text-sm text-gray-700 font-medium leading-tight line-clamp-2">{{ rule.name }}</div>
               </button>
             </div>
           </div>

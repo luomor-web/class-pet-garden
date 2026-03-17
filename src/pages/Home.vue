@@ -1028,123 +1028,120 @@ onMounted(async () => {
 
         <!-- 学生列表 -->
         <div v-else key="students" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-          <TransitionGroup name="card">
-            <div 
-              v-for="(student, index) in filteredStudents" 
-              :key="student.id"
-              class="bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300 cursor-pointer relative group card-hover"
-              :class="[getLevelBorderClass(getDisplayLevel(student)), { 
-                'ring-2 ring-purple-400 ring-offset-2': batchMode && selectedStudents.has(student.id),
-                'ring-2 ring-red-400 ring-offset-2': showDeleteStudentMode && deleteStudentList.includes(student.id)
-              }]"
-              :style="{ animationDelay: `${index * 50}ms` }"
-              @click="
-                batchMode ? toggleStudentSelect(student.id) : 
-                showDeleteStudentMode ? toggleDeleteStudent(student.id) : 
-                openDetailPanel(student)
-              "
-            >
-              <!-- 评分动效 -->
-              <Transition name="score-pop">
-                <div 
-                  v-if="scoreAnimations.has(student.id)"
-                  class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
-                >
-                  <div 
-                    class="text-4xl font-bold animate-bounce-in"
-                    :class="scoreAnimations.get(student.id)!.points > 0 ? 'text-green-500' : 'text-red-500'"
-                  >
-                    {{ scoreAnimations.get(student.id)!.points > 0 ? '+' : '' }}{{ scoreAnimations.get(student.id)!.points }}
-                  </div>
-                  <div class="absolute inset-0 overflow-hidden">
-                    <span v-for="i in 6" :key="i" class="absolute text-2xl animate-sparkle" :style="{ left: `${Math.random() * 80 + 10}%`, top: `${Math.random() * 80 + 10}%`, animationDelay: `${i * 100}ms` }">
-                      {{ scoreAnimations.get(student.id)!.points > 0 ? '⭐' : '💫' }}
-                    </span>
-                  </div>
-                </div>
-              </Transition>
-              
-              <!-- 选中标记 -->
-              <Transition name="pop">
-                <div 
-                  v-if="batchMode || showDeleteStudentMode"
-                  class="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center z-10 shadow-md transition-all"
-                  :class="batchMode 
-                    ? (selectedStudents.has(student.id) ? 'bg-gradient-to-r from-purple-400 to-pink-400' : 'bg-white border-2 border-gray-300')
-                    : (deleteStudentList.includes(student.id) ? 'bg-gradient-to-r from-red-400 to-pink-400' : 'bg-white border-2 border-gray-300')
-                  "
-                >
-                  <span v-if="(batchMode && selectedStudents.has(student.id)) || (showDeleteStudentMode && deleteStudentList.includes(student.id))" class="text-white text-sm font-bold">✓</span>
-                </div>
-              </Transition>
-              
-              <!-- 宠物图片区域 -->
-              <div class="aspect-square flex items-center justify-center overflow-hidden relative"
-                :class="student.pet_type ? 'bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100' : 'bg-gradient-to-br from-gray-100 via-slate-50 to-gray-100'"
+          <div 
+            v-for="student in filteredStudents" 
+            :key="student.id"
+            class="bg-white rounded-2xl shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300 cursor-pointer relative group card-hover"
+            :class="[getLevelBorderClass(getDisplayLevel(student)), { 
+              'ring-2 ring-purple-400 ring-offset-2': batchMode && selectedStudents.has(student.id),
+              'ring-2 ring-red-400 ring-offset-2': showDeleteStudentMode && deleteStudentList.includes(student.id)
+            }]"
+            @click="
+              batchMode ? toggleStudentSelect(student.id) : 
+              showDeleteStudentMode ? toggleDeleteStudent(student.id) : 
+              openDetailPanel(student)
+            "
+          >
+            <!-- 评分动效 -->
+            <Transition name="score-pop">
+              <div 
+                v-if="scoreAnimations.has(student.id)"
+                class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
               >
-                <!-- 有宠物时使用 PetImage 组件 -->
-                <template v-if="student.pet_type">
-                  <PetImage
-                    :src="getStudentPetImage(student)"
-                    :alt="getPetType(student.pet_type)?.name"
-                    size="full"
-                    :rounded="false"
-                    :show-loading="true"
-                    class="w-full h-full"
-                  />
-                </template>
-                <!-- 未领养宠物 -->
-                <div v-else class="flex flex-col items-center">
-                  <span class="text-6xl pet-unknown">❓</span>
-                  <span class="text-xs text-gray-400 mt-2 group-hover:text-orange-400 transition-colors">点击领养</span>
-                </div>
-                
-                <!-- 等级徽章 -->
                 <div 
-                  class="absolute bottom-3 right-3 font-bold px-3 py-1 rounded-full shadow-lg text-white text-sm"
-                  :class="`bg-gradient-to-r ${getLevelBgClass(getDisplayLevel(student))}`"
+                  class="text-4xl font-bold animate-bounce-in"
+                  :class="scoreAnimations.get(student.id)!.points > 0 ? 'text-green-500' : 'text-red-500'"
                 >
-                  <span v-if="getDisplayLevel(student) >= 10">👑</span>
-                  <span v-else>Lv.</span>{{ getDisplayLevel(student) }}
+                  {{ scoreAnimations.get(student.id)!.points > 0 ? '+' : '' }}{{ scoreAnimations.get(student.id)!.points }}
+                </div>
+                <div class="absolute inset-0 overflow-hidden">
+                  <span v-for="i in 6" :key="i" class="absolute text-2xl animate-sparkle" :style="{ left: `${Math.random() * 80 + 10}%`, top: `${Math.random() * 80 + 10}%`, animationDelay: `${i * 100}ms` }">
+                    {{ scoreAnimations.get(student.id)!.points > 0 ? '⭐' : '💫' }}
+                  </span>
                 </div>
               </div>
+            </Transition>
+            
+            <!-- 选中标记 -->
+            <Transition name="pop">
+              <div 
+                v-if="batchMode || showDeleteStudentMode"
+                class="absolute top-3 left-3 w-7 h-7 rounded-full flex items-center justify-center z-10 shadow-md transition-all"
+                :class="batchMode 
+                  ? (selectedStudents.has(student.id) ? 'bg-gradient-to-r from-purple-400 to-pink-400' : 'bg-white border-2 border-gray-300')
+                  : (deleteStudentList.includes(student.id) ? 'bg-gradient-to-r from-red-400 to-pink-400' : 'bg-white border-2 border-gray-300')
+                "
+              >
+                <span v-if="(batchMode && selectedStudents.has(student.id)) || (showDeleteStudentMode && deleteStudentList.includes(student.id))" class="text-white text-sm font-bold">✓</span>
+              </div>
+            </Transition>
+            
+            <!-- 宠物图片区域 -->
+            <div class="aspect-square flex items-center justify-center overflow-hidden relative"
+              :class="student.pet_type ? 'bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100' : 'bg-gradient-to-br from-gray-100 via-slate-50 to-gray-100'"
+            >
+              <!-- 有宠物时使用 PetImage 组件 -->
+              <template v-if="student.pet_type">
+                <PetImage
+                  :src="getStudentPetImage(student)"
+                  :alt="getPetType(student.pet_type)?.name"
+                  size="full"
+                  :rounded="false"
+                  :show-loading="true"
+                  class="w-full h-full"
+                />
+              </template>
+              <!-- 未领养宠物 -->
+              <div v-else class="flex flex-col items-center">
+                <span class="text-6xl pet-unknown">❓</span>
+                <span class="text-xs text-gray-400 mt-2 group-hover:text-orange-400 transition-colors">点击领养</span>
+              </div>
               
-              <!-- 信息区域 -->
-              <div class="p-4">
-                <!-- 学生姓名 + 宠物名 -->
-                <div class="flex items-center justify-between mb-2">
-                  <span class="font-bold text-lg text-gray-800 group-hover:text-orange-500 transition-colors">{{ student.name }}</span>
-                  <span class="text-xs px-2 py-1 rounded-full" 
-                    :class="student.pet_type ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-600' : 'bg-gray-100 text-gray-400'">
-                    {{ student.pet_type ? getPetType(student.pet_type)?.name : '未领养' }}
-                  </span>
-                </div>
-                
-                <!-- 成长值 + 积分 -->
-                <div class="flex items-center justify-between text-sm mb-3">
-                  <span class="text-gray-500 flex items-center gap-1">
-                    <span class="text-purple-400">💜</span>
-                    <span class="font-medium text-purple-600">{{ getLevelProgress(student.pet_exp).current }}</span>
-                    <span class="text-gray-300">/</span>
-                    <span>{{ getLevelProgress(student.pet_exp).required }}</span>
-                  </span>
-                  <span class="font-bold text-lg flex items-center gap-1">
-                    <span class="text-yellow-400">⭐</span>
-                    <span class="text-orange-500">{{ student.total_points }}</span>
-                  </span>
-                </div>
-                
-                <!-- 进度条 -->
-                <div class="bg-gray-100 rounded-full h-2.5 overflow-hidden progress-glow">
-                  <div 
-                    class="rounded-full h-2.5 transition-all duration-500"
-                    :class="getDisplayLevel(student) >= 5 ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400' : 'bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400'"
-                    :style="{ width: `${getLevelProgress(student.pet_exp).percentage}%` }"
-                  ></div>
-                </div>
+              <!-- 等级徽章 -->
+              <div 
+                class="absolute bottom-3 right-3 font-bold px-3 py-1 rounded-full shadow-lg text-white text-sm"
+                :class="`bg-gradient-to-r ${getLevelBgClass(getDisplayLevel(student))}`"
+              >
+                <span v-if="getDisplayLevel(student) >= 10">👑</span>
+                <span v-else>Lv.</span>{{ getDisplayLevel(student) }}
               </div>
             </div>
-          </TransitionGroup>
+            
+            <!-- 信息区域 -->
+            <div class="p-4">
+              <!-- 学生姓名 + 宠物名 -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-lg text-gray-800 group-hover:text-orange-500 transition-colors">{{ student.name }}</span>
+                <span class="text-xs px-2 py-1 rounded-full" 
+                  :class="student.pet_type ? 'bg-gradient-to-r from-orange-100 to-pink-100 text-orange-600' : 'bg-gray-100 text-gray-400'">
+                  {{ student.pet_type ? getPetType(student.pet_type)?.name : '未领养' }}
+                </span>
+              </div>
+              
+              <!-- 成长值 + 积分 -->
+              <div class="flex items-center justify-between text-sm mb-3">
+                <span class="text-gray-500 flex items-center gap-1">
+                  <span class="text-purple-400">💜</span>
+                  <span class="font-medium text-purple-600">{{ getLevelProgress(student.pet_exp).current }}</span>
+                  <span class="text-gray-300">/</span>
+                  <span>{{ getLevelProgress(student.pet_exp).required }}</span>
+                </span>
+                <span class="font-bold text-lg flex items-center gap-1">
+                  <span class="text-yellow-400">⭐</span>
+                  <span class="text-orange-500">{{ student.total_points }}</span>
+                </span>
+              </div>
+              
+              <!-- 进度条 -->
+              <div class="bg-gray-100 rounded-full h-2.5 overflow-hidden progress-glow">
+                <div 
+                  class="rounded-full h-2.5 transition-all duration-500"
+                  :class="getDisplayLevel(student) >= 5 ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400' : 'bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400'"
+                  :style="{ width: `${getLevelProgress(student.pet_exp).percentage}%` }"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
       </Transition>
       
@@ -1812,21 +1809,6 @@ onMounted(async () => {
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-10px);
-}
-
-.card-enter-active,
-.card-leave-active {
-  transition: all 0.5s ease;
-}
-
-.card-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.card-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
 }
 
 .slide-up-enter-active,

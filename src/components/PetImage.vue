@@ -32,6 +32,18 @@ const sizeClasses = computed(() => {
   return sizes[props.size] || sizes.md
 })
 
+// 根据尺寸调整表情大小
+const emojiSizeClass = computed(() => {
+  const sizes: Record<string, string> = {
+    sm: 'text-sm',
+    md: 'text-xl',
+    lg: 'text-3xl',
+    xl: 'text-5xl',
+    full: 'text-6xl'
+  }
+  return sizes[props.size] || sizes.md
+})
+
 function onLoad() {
   isLoaded.value = true
 }
@@ -62,7 +74,7 @@ const randomEmoji = computed(() => loadingEmojis[Math.floor(Math.random() * load
       >
         <!-- 爪印动画 -->
         <div class="relative">
-          <span class="text-2xl animate-bounce">{{ randomEmoji }}</span>
+          <span :class="[emojiSizeClass, 'animate-bounce']">{{ randomEmoji }}</span>
           <!-- 爪印轨迹 -->
           <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
             <span class="w-1.5 h-1.5 bg-orange-300 rounded-full animate-pulse" style="animation-delay: 0ms"></span>
@@ -79,7 +91,7 @@ const randomEmoji = computed(() => loadingEmojis[Math.floor(Math.random() * load
         v-if="hasError" 
         class="absolute inset-0 flex items-center justify-center bg-gray-100"
       >
-        <span class="text-xl text-gray-400">🐾</span>
+        <span :class="[emojiSizeClass, 'text-gray-400']">🐕</span>
       </div>
     </Transition>
 

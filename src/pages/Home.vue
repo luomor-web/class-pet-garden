@@ -770,7 +770,7 @@ onMounted(async () => {
     <Transition name="fade">
       <div v-if="isLoading" class="fixed inset-0 bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 flex items-center justify-center z-[200]">
         <div class="text-center">
-          <div class="text-8xl mb-6 animate-bounce">🐾</div>
+          <div class="text-8xl mb-6 animate-bounce">🐕</div>
           <div class="text-xl font-bold text-gray-600">加载中...</div>
           <div class="mt-4 flex justify-center gap-2">
             <span class="w-3 h-3 bg-orange-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
@@ -862,7 +862,7 @@ onMounted(async () => {
       <!-- Left -->
       <div class="flex items-center gap-3">
         <h1 class="text-xl font-bold text-white drop-shadow-lg flex items-center gap-2">
-          <span class="text-2xl animate-bounce-slow">🐾</span>
+          <span class="text-2xl animate-bounce-slow">🐕</span>
           <span class="text-gradient">班级宠物园</span>
         </h1>
         <select 
@@ -893,7 +893,7 @@ onMounted(async () => {
         <!-- Pet Menu -->
         <div class="relative" v-if="!batchMode">
           <button @click="showPetMenu = !showPetMenu" class="px-3 py-1.5 rounded-lg text-sm bg-white/95 hover:bg-white shadow-md transition-all font-medium">
-            🐾 ▾
+            🐕 宠物 ▾
           </button>
           <div v-if="showPetMenu" @click="showPetMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">
@@ -908,7 +908,7 @@ onMounted(async () => {
         <!-- Sort Menu -->
         <div class="relative" v-if="!batchMode">
           <button @click="toggleSortMenu" class="px-3 py-1.5 rounded-lg text-sm bg-white/95 hover:bg-white shadow-md transition-all font-medium">
-            📊 {{ sortOrder === 'asc' ? '▲' : '▼' }}
+            📊 排序 ▾
           </button>
           <div v-if="showSortMenu" @click="showSortMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">
@@ -924,7 +924,7 @@ onMounted(async () => {
         <!-- Class Menu -->
         <div class="relative" v-if="!batchMode">
           <button @click="showClassMenu = !showClassMenu" class="px-3 py-1.5 rounded-lg text-sm bg-white/95 hover:bg-white shadow-md transition-all font-medium">
-            📚 ▾
+            📚 班级 ▾
           </button>
           <div v-if="showClassMenu" @click="showClassMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">
@@ -945,7 +945,7 @@ onMounted(async () => {
         <!-- Student Menu -->
         <div class="relative" v-if="currentClass && !batchMode">
           <button @click="showStudentMenu = !showStudentMenu" class="px-3 py-1.5 rounded-lg text-sm bg-white/95 hover:bg-white shadow-md transition-all font-medium">
-            👤 ▾
+            👤 学生 ▾
           </button>
           <div v-if="showStudentMenu" @click="showStudentMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">
@@ -960,7 +960,7 @@ onMounted(async () => {
         <!-- Eval Menu -->
         <div class="relative" v-if="!batchMode">
           <button @click="showEvalMenu = !showEvalMenu" class="px-3 py-1.5 rounded-lg text-sm bg-white/95 hover:bg-white shadow-md transition-all font-medium">
-            ⭐ ▾
+            ⭐ 评价 ▾
           </button>
           <div v-if="showEvalMenu" @click="showEvalMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">

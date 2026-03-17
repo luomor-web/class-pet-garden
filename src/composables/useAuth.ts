@@ -21,10 +21,19 @@ if (savedUser) {
   }
 }
 
+// 如果没有用户，自动设置为游客
+if (!user.value) {
+  const guestUser = { id: 'guest', username: '游客', isGuest: true }
+  user.value = guestUser
+  token.value = 'guest'
+  localStorage.setItem('token', 'guest')
+  localStorage.setItem('user', JSON.stringify(guestUser))
+}
+
 // 创建带认证的 axios 实例
 export function useAuth() {
   const api = axios.create({
-    baseURL: 'http://localhost:3002'
+    baseURL: '/pet-garden/api'
   })
   
   // 添加请求拦截器
@@ -35,7 +44,7 @@ export function useAuth() {
     return config
   })
   
-  const isLoggedIn = computed(() => !!user.value)
+  const isLoggedIn = computed(() => !!user.value && !user.value.isGuest)
   const isGuest = computed(() => user.value?.isGuest ?? true)
   const username = computed(() => user.value?.username || '游客')
   
@@ -47,18 +56,21 @@ export function useAuth() {
   }
   
   function logout() {
-    user.value = null
-    token.value = ''
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    // 退出登录后回到游客模式
+    const guestUser = { id: 'guest', username: '游客', isGuest: true }
+    user.value = guestUser
+    token.value = 'guest'
+    localStorage.setItem('token', 'guest')
+    localStorage.setItem('user', JSON.stringify(guestUser))
   }
   
   async function fetchUserInfo() {
+    if (isGuest.value) return // 游客不需要获取用户信息
     try {
-      const res = await api.get('/api/auth/me')
+      const res = await api.get('/auth/me')
       user.value = res.data.user
     } catch {
-      // Token 无效，清除登录状态
+      // Token 无效，回到游客模式
       logout()
     }
   }

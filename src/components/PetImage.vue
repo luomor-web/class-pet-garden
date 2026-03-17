@@ -6,6 +6,7 @@ interface Props {
   alt?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
   rounded?: boolean
+  roundedClass?: string
   hoverScale?: boolean
   showLoading?: boolean
   fixedEmojiSize?: boolean
@@ -15,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
   alt: '',
   size: 'md',
   rounded: true,
+  roundedClass: '',
   hoverScale: true,
   showLoading: true,
   fixedEmojiSize: false
@@ -32,6 +34,11 @@ const sizeClasses = computed(() => {
     full: 'w-full h-full'
   }
   return sizes[props.size] || sizes.md
+})
+
+const roundedClass = computed(() => {
+  if (props.roundedClass) return props.roundedClass
+  return props.rounded ? 'rounded-full' : ''
 })
 
 // 根据尺寸调整表情大小
@@ -69,7 +76,7 @@ const randomEmoji = computed(() => loadingEmojis[Math.floor(Math.random() * load
     class="relative overflow-hidden flex items-center justify-center"
     :class="[
       sizeClasses,
-      rounded ? 'rounded-full' : 'rounded-lg'
+      roundedClass
     ]"
   >
     <!-- 加载状态 - 可爱动物爪印动画 -->

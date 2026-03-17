@@ -1176,6 +1176,7 @@ onMounted(async () => {
                   :alt="getPetType(student.pet_type)?.name"
                   size="full"
                   :rounded="false"
+                  rounded-class="rounded-t-2xl"
                   :show-loading="true"
                   class="w-full h-full"
                 />

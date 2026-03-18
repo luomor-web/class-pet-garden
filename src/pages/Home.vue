@@ -1065,12 +1065,11 @@ onMounted(async () => {
         
         <!-- User Menu -->
         <div class="relative">
-          <button @click="showUserMenu = !showUserMenu" class="px-3 py-1.5 rounded-lg text-sm bg-white/95 hover:bg-white shadow-md transition-all font-medium flex items-center gap-1">
-            <span v-if="isGuest">👤</span>
-            <span v-else class="w-5 h-5 rounded-full bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+          <button @click="showUserMenu = !showUserMenu" class="w-9 h-9 rounded-full bg-white/95 hover:bg-white shadow-md transition-all flex items-center justify-center overflow-hidden">
+            <span v-if="isGuest" class="text-lg">👤</span>
+            <span v-else class="w-full h-full rounded-full bg-gradient-to-r from-orange-400 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
               {{ username.charAt(0).toUpperCase() }}
             </span>
-            {{ username }} ▾
           </button>
           <div v-if="showUserMenu" @click="showUserMenu = false" class="fixed inset-0 z-40"></div>
           <Transition name="dropdown">

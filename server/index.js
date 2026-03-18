@@ -1,136 +1,28 @@
 import express from 'express'
 import cors from 'cors'
-import crypto from 'crypto'
-import Database from 'better-sqlite3'
 import { v4 as uuidv4 } from 'uuid'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+import { initDb, db } from './db.js'
+import { calculateLevel } from './utils/level.js'
+
+// 导入路由
+import authRoutes from './routes/auth.js'
+import classRoutes from './routes/classes.js'
+import studentRoutes from './routes/students.js'
+import evaluationRoutes from './routes/evaluations.js'
+import ruleRoutes from './routes/rules.js'
+import backupRoutes from './routes/backup.js'
+import settingsRoutes from './routes/settings.js'
 
 const app = express()
 const PORT = 3002
-
-// 等级配置 (每级所需经验)
-const LEVEL_CONFIG = [40, 60, 80, 100, 120, 140, 160]
-
-// 计算等级
-function calculateLevel(exp) {
-  let level = 1
-  let total = 0
-  for (const required of LEVEL_CONFIG) {
-    total += required
-    if (exp >= total) {
-      level++
-    } else {
-      break
-    }
-  }
-  return Math.min(level, 8)
-}
 
 // Middleware
 app.use(cors())
 app.use(express.json())
 
-// Database - 使用绝对路径
-const dbPath = join(__dirname, 'pet-garden.db')
-const db = new Database(dbPath)
-
-// Create tables
-db.exec(`
-  -- 用户表
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    is_guest INTEGER DEFAULT 0,
-    created_at INTEGER
-  );
-
-  -- 班级表
-  CREATE TABLE IF NOT EXISTS classes (
-    id TEXT PRIMARY KEY,
-    user_id TEXT,
-    name TEXT NOT NULL,
-    created_at INTEGER,
-    updated_at INTEGER
-  );
-
-  -- 学生表
-  CREATE TABLE IF NOT EXISTS students (
-    id TEXT PRIMARY KEY,
-    class_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    student_no TEXT,
-    total_points INTEGER DEFAULT 0,
-    pet_type TEXT,
-    pet_level INTEGER DEFAULT 1,
-    pet_exp INTEGER DEFAULT 0,
-    created_at INTEGER,
-    FOREIGN KEY (class_id) REFERENCES classes(id)
-  );
-
-  -- 徽章表
-  CREATE TABLE IF NOT EXISTS badges (
-    id TEXT PRIMARY KEY,
-    student_id TEXT NOT NULL,
-    pet_type TEXT NOT NULL,
-    earned_at INTEGER,
-    FOREIGN KEY (student_id) REFERENCES students(id)
-  );
-
-  -- 评价规则表
-  CREATE TABLE IF NOT EXISTS evaluation_rules (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    points INTEGER NOT NULL,
-    category TEXT NOT NULL,
-    is_custom INTEGER DEFAULT 0,
-    created_at INTEGER
-  );
-
-  -- 评价记录表
-  CREATE TABLE IF NOT EXISTS evaluation_records (
-    id TEXT PRIMARY KEY,
-    class_id TEXT NOT NULL,
-    student_id TEXT NOT NULL,
-    points INTEGER NOT NULL,
-    reason TEXT NOT NULL,
-    category TEXT NOT NULL,
-    timestamp INTEGER,
-    FOREIGN KEY (class_id) REFERENCES classes(id),
-    FOREIGN KEY (student_id) REFERENCES students(id)
-  );
-
-  -- 商品表
-  CREATE TABLE IF NOT EXISTS shop_items (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    description TEXT,
-    price INTEGER NOT NULL,
-    stock INTEGER DEFAULT 0,
-    image TEXT
-  );
-
-  -- 兑换记录表
-  CREATE TABLE IF NOT EXISTS exchange_records (
-    id TEXT PRIMARY KEY,
-    student_id TEXT NOT NULL,
-    item_id TEXT NOT NULL,
-    item_name TEXT,
-    price INTEGER,
-    timestamp INTEGER,
-    FOREIGN KEY (student_id) REFERENCES students(id)
-  );
-
-  -- 设置表
-  CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  );
-`)
+// 初始化数据库
+initDb()
 
 // 创建默认游客用户
 const guestUser = db.prepare('SELECT id FROM users WHERE username = ?').get('guest')
@@ -151,763 +43,144 @@ if (classesWithoutUser.length > 0) {
   }
 }
 
-// Initialize default rules if not exists
+// 初始化默认评价规则
 const rulesCount = db.prepare('SELECT COUNT(*) as count FROM evaluation_rules').get()
 if (rulesCount && rulesCount.count === 0) {
-  const defaultRules = [
-    // ===== 学习类 (16条: 奖9, 惩7) =====
-    // 学习加分
-    { id: uuidv4(), name: '作业完成优秀', points: 1, category: '学习' },
-    { id: uuidv4(), name: '平时测验满分', points: 3, category: '学习' },
-    { id: uuidv4(), name: '平时测验达优秀', points: 2, category: '学习' },
-    { id: uuidv4(), name: '默写全对', points: 1, category: '学习' },
-    { id: uuidv4(), name: '订正态度认真', points: 1, category: '学习' },
-    { id: uuidv4(), name: '优秀作业,值得表扬', points: 1, category: '学习' },
-    { id: uuidv4(), name: '近期学习状态进步', points: 1, category: '学习' },
-    { id: uuidv4(), name: '被老师点名表扬', points: 1, category: '学习' },
-    { id: uuidv4(), name: '单元测验显著进步', points: 2, category: '学习' },
-    // 学习扣分
-    { id: uuidv4(), name: '不交作业', points: -1, category: '学习' },
-    { id: uuidv4(), name: '未完成作业', points: -2, category: '学习' },
-    { id: uuidv4(), name: '作业潦草', points: -1, category: '学习' },
-    { id: uuidv4(), name: '订正不认真', points: -2, category: '学习' },
-    { id: uuidv4(), name: '抄袭作业', points: -5, category: '学习' },
-    { id: uuidv4(), name: '考试作弊', points: -5, category: '学习' },
-    { id: uuidv4(), name: '学习显著退步', points: -2, category: '学习' },
-    
-    // ===== 行为类 (32条: 奖13, 惩19) =====
-    // 行为加分
-    { id: uuidv4(), name: '早读认真专注', points: 1, category: '行为' },
-    { id: uuidv4(), name: '课前准备充分', points: 1, category: '行为' },
-    { id: uuidv4(), name: '眼保健操全程认真', points: 1, category: '行为' },
-    { id: uuidv4(), name: '升旗仪式安静整齐', points: 1, category: '行为' },
-    { id: uuidv4(), name: '守纪表现优秀(被表扬)', points: 2, category: '行为' },
-    { id: uuidv4(), name: '主动帮助同学', points: 2, category: '行为' },
-    { id: uuidv4(), name: '拾金不昧(一般物品)', points: 2, category: '行为' },
-    { id: uuidv4(), name: '拾金不昧(贵重物品)', points: 5, category: '行为' },
-    { id: uuidv4(), name: '主动帮助生病同学', points: 3, category: '行为' },
-    { id: uuidv4(), name: '主动调解同学矛盾、化解冲突', points: 3, category: '行为' },
-    { id: uuidv4(), name: '做好人好事被学校提出表扬', points: 3, category: '行为' },
-    { id: uuidv4(), name: '积极参与校内外志愿服务', points: 3, category: '行为' },
-    { id: uuidv4(), name: '犯错主动认错,积极协商', points: 1, category: '行为' },
-    // 行为扣分
-    { id: uuidv4(), name: '无故迟到或早退', points: -1, category: '行为' },
-    { id: uuidv4(), name: '未佩戴红领巾,不穿校服', points: -1, category: '行为' },
-    { id: uuidv4(), name: '私自旷课或课间操', points: -3, category: '行为' },
-    { id: uuidv4(), name: '上课讲话、开小差', points: -1, category: '行为' },
-    { id: uuidv4(), name: '扰乱课堂', points: -3, category: '行为' },
-    { id: uuidv4(), name: '课间追逐打闹', points: -3, category: '行为' },
-    { id: uuidv4(), name: '追逐打闹(酿成事故)', points: -3, category: '行为' },
-    { id: uuidv4(), name: '中午自习说话、随意走动', points: -1, category: '行为' },
-    { id: uuidv4(), name: '私自带玩具或零食或危险物品', points: -3, category: '行为' },
-    { id: uuidv4(), name: '排队时说话或小动作不停,被点名', points: -1, category: '行为' },
-    { id: uuidv4(), name: '传播脏话或不良歌谣', points: -5, category: '行为' },
-    { id: uuidv4(), name: '撒谎、隐瞒真实情况', points: -2, category: '行为' },
-    { id: uuidv4(), name: '说脏话,骂人,起绰号', points: -2, category: '行为' },
-    { id: uuidv4(), name: '欺负、推搡、伤害同学', points: -10, category: '行为' },
-    { id: uuidv4(), name: '挑拨离间、拉帮结派', points: -3, category: '行为' },
-    { id: uuidv4(), name: '不尊重同学、孤立他人', points: -3, category: '行为' },
-    { id: uuidv4(), name: '为私欲包庇犯错者', points: -3, category: '行为' },
-    { id: uuidv4(), name: '恶意举报、诬陷他人', points: -3, category: '行为' },
-    { id: uuidv4(), name: '破坏校园设施', points: -5, category: '行为' },
-    
-    // ===== 健康类 (14条: 奖7, 惩7) =====
-    // 健康加分
-    { id: uuidv4(), name: '认真完成包干区值日', points: 1, category: '健康' },
-    { id: uuidv4(), name: '主动为班级擦黑板', points: 1, category: '健康' },
-    { id: uuidv4(), name: '主动整理讲台', points: 1, category: '健康' },
-    { id: uuidv4(), name: '主动整理黑板粉笔槽', points: 1, category: '健康' },
-    { id: uuidv4(), name: '主动倒垃圾并套垃圾袋', points: 2, category: '健康' },
-    { id: uuidv4(), name: '座位整洁无涂画,桌椅干净', points: 1, category: '健康' },
-    { id: uuidv4(), name: '座位周围无垃圾', points: 1, category: '健康' },
-    // 健康扣分
-    { id: uuidv4(), name: '打扫包干区时间玩耍,不认真', points: -2, category: '健康' },
-    { id: uuidv4(), name: '个人座位卫生不合格', points: -1, category: '健康' },
-    { id: uuidv4(), name: '校园内乱扔垃圾', points: -1, category: '健康' },
-    { id: uuidv4(), name: '桌洞脏乱、物品杂乱', points: -1, category: '健康' },
-    { id: uuidv4(), name: '破坏卫生、乱涂乱画', points: -2, category: '健康' },
-    { id: uuidv4(), name: '浪费粮食', points: -2, category: '健康' },
-    { id: uuidv4(), name: '破坏班级绿植、把玩绿植', points: -3, category: '健康' },
-    
-    // ===== 其他类 (21条: 奖16, 惩5) =====
-    // 其他加分
-    { id: uuidv4(), name: '主动整理图书、摆放整齐', points: 2, category: '其他' },
-    { id: uuidv4(), name: '主动帮同学更换桌椅', points: 2, category: '其他' },
-    { id: uuidv4(), name: '主动承担班级任务', points: 2, category: '其他' },
-    { id: uuidv4(), name: '积极参加班级墙面布置', points: 2, category: '其他' },
-    { id: uuidv4(), name: '积极参加班级或学校活动', points: 1, category: '其他' },
-    { id: uuidv4(), name: '活动中表现优秀', points: 2, category: '其他' },
-    { id: uuidv4(), name: '代表班级参赛', points: 3, category: '其他' },
-    { id: uuidv4(), name: '校级比赛:一等奖', points: 5, category: '其他' },
-    { id: uuidv4(), name: '校级比赛:二等奖', points: 4, category: '其他' },
-    { id: uuidv4(), name: '校级比赛:三等奖', points: 3, category: '其他' },
-    { id: uuidv4(), name: '区级及以上:一等奖', points: 8, category: '其他' },
-    { id: uuidv4(), name: '区级及以上:二等奖', points: 6, category: '其他' },
-    { id: uuidv4(), name: '区级及以上:三等奖', points: 4, category: '其他' },
-    { id: uuidv4(), name: '联欢会或文艺汇演积极参与', points: 2, category: '其他' },
-    { id: uuidv4(), name: '为班级争得荣誉', points: 5, category: '其他' },
-    { id: uuidv4(), name: '小组全周无违纪、全员交作业', points: 2, category: '其他' },
-    // 其他扣分
-    { id: uuidv4(), name: '损坏公物、乱刻乱画', points: -1, category: '其他' },
-    { id: uuidv4(), name: '浪费水电、屡教不改', points: -1, category: '其他' },
-    { id: uuidv4(), name: '故意玩弄损坏公共电器', points: -3, category: '其他' },
-    { id: uuidv4(), name: '故意损坏卫生工具', points: -2, category: '其他' },
-    { id: uuidv4(), name: '扣分严重/打架/作弊/严重违纪', points: -8, category: '其他' },
-  ]
-  
-  const insertRule = db.prepare('INSERT INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, 0, ?)')
-  const now = Date.now()
-  for (const rule of defaultRules) {
-    insertRule.run(rule.id, rule.name, rule.points, rule.category, now)
-  }
+  initDefaultRules()
 }
 
-// Initialize level config
+// 初始化等级配置
 const levelConfig = db.prepare("SELECT value FROM settings WHERE key = 'levelConfig'").get()
 if (!levelConfig) {
-  db.prepare("INSERT INTO settings (key, value) VALUES ('levelConfig', ?)").run(JSON.stringify([40, 60, 80, 100, 120, 140, 160]))
+  db.prepare("INSERT INTO settings (key, value) VALUES ('levelConfig', ?)")
+    .run(JSON.stringify([40, 60, 80, 100, 120, 140, 160]))
 }
 
-// === API Routes ===
+// 注册路由
+app.use('/api/auth', authRoutes)
+app.use('/api/classes', classRoutes)
+app.use('/api/students', studentRoutes)
+app.use('/api/evaluations', evaluationRoutes)
+app.use('/api/rules', ruleRoutes)
+app.use('/api/backup', backupRoutes)
+app.use('/api/settings', settingsRoutes)
 
-// 验证班级归属的辅助函数
-function verifyClassOwnership(req, res, next) {
-  const classId = req.params.classId || req.body.classId
-  if (!classId) {
-    return res.status(400).json({ error: '缺少班级ID' })
-  }
-  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
-  if (!cls) {
-    return res.status(404).json({ error: '班级不存在' })
-  }
-  if (cls.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权访问此班级' })
-  }
-  req.classId = classId
-  next()
-}
-
-// Students
-app.get('/api/classes/:classId/students', authMiddleware, verifyClassOwnership, (req, res) => {
-  const students = db.prepare('SELECT * FROM students WHERE class_id = ? ORDER BY name').all(req.params.classId)
-  res.json({ students })
-})
-
-app.post('/api/students', authMiddleware, (req, res) => {
-  const { classId, name, studentNo } = req.body
-  
-  // 验证班级归属
-  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
-  if (!cls) {
-    return res.status(404).json({ error: '班级不存在' })
-  }
-  if (cls.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权访问此班级' })
-  }
-  
-  const id = uuidv4()
-  const now = Date.now()
-  db.prepare('INSERT INTO students (id, class_id, name, student_no, total_points, pet_level, pet_exp, created_at) VALUES (?, ?, ?, ?, 0, 1, 0, ?)').run(id, classId, name, studentNo || null, now)
-  res.json({ id, class_id: classId, name, student_no: studentNo || null, total_points: 0, pet_level: 1, pet_exp: 0, created_at: now })
-})
-
-app.put('/api/students/:id', authMiddleware, (req, res) => {
-  const { name, studentNo } = req.body
-  
-  // 验证学生归属
-  const student = db.prepare(`
-    SELECT s.* FROM students s
-    JOIN classes c ON s.class_id = c.id
-    WHERE s.id = ? AND c.user_id = ?
-  `).get(req.params.id, req.userId)
-  
-  if (!student) {
-    return res.status(404).json({ error: '学生不存在或无权访问' })
-  }
-  
-  db.prepare('UPDATE students SET name = ?, student_no = ? WHERE id = ?').run(name, studentNo || null, req.params.id)
-  res.json({ success: true })
-})
-
-app.delete('/api/students/:id', authMiddleware, (req, res) => {
-  // 验证学生归属
-  const student = db.prepare(`
-    SELECT s.* FROM students s
-    JOIN classes c ON s.class_id = c.id
-    WHERE s.id = ? AND c.user_id = ?
-  `).get(req.params.id, req.userId)
-  
-  if (!student) {
-    return res.status(404).json({ error: '学生不存在或无权访问' })
-  }
-  
-  // 先删除相关的评价记录
-  db.prepare('DELETE FROM evaluation_records WHERE student_id = ?').run(req.params.id)
-  // 再删除学生
-  db.prepare('DELETE FROM students WHERE id = ?').run(req.params.id)
-  res.json({ success: true })
-})
-
-// Batch import students
-app.post('/api/students/import', authMiddleware, (req, res) => {
-  const { classId, students } = req.body
-  if (!classId || !students || !Array.isArray(students)) {
-    return res.status(400).json({ error: 'Invalid input' })
-  }
-  
-  // 验证班级归属
-  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
-  if (!cls) {
-    return res.status(404).json({ error: '班级不存在' })
-  }
-  if (cls.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权访问此班级' })
-  }
-  
-  const now = Date.now()
-  const insertStmt = db.prepare('INSERT INTO students (id, class_id, name, student_no, total_points, pet_level, pet_exp, created_at) VALUES (?, ?, ?, ?, 0, 1, 0, ?)')
-  
-  let imported = 0
-  for (const student of students) {
-    if (student.name && student.name.trim()) {
-      const id = uuidv4()
-      insertStmt.run(id, classId, student.name.trim(), student.studentNo?.trim() || null, now)
-      imported++
-    }
-  }
-  
-  res.json({ success: true, imported })
-})
-
-// Pet
-app.put('/api/students/:id/pet', authMiddleware, (req, res) => {
-  const { petType } = req.body
-  const now = Date.now()
-  
-  // 验证学生归属
-  const student = db.prepare(`
-    SELECT s.* FROM students s
-    JOIN classes c ON s.class_id = c.id
-    WHERE s.id = ? AND c.user_id = ?
-  `).get(req.params.id, req.userId)
-  
-  if (!student) {
-    return res.status(404).json({ error: '学生不存在或无权访问' })
-  }
-  
-  // If student already has a pet, create a badge for it if level is 8
-  if (student.pet_type && student.pet_level >= 8) {
-    const badgeId = uuidv4()
-    db.prepare('INSERT INTO badges (id, student_id, pet_type, earned_at) VALUES (?, ?, ?, ?)').run(badgeId, req.params.id, student.pet_type, now)
-  }
-  
-  // Update pet - 只更新宠物类型，保留成长进度（pet_level 和 pet_exp）
-  db.prepare('UPDATE students SET pet_type = ? WHERE id = ?').run(petType, req.params.id)
-  
-  res.json({ success: true, petType, petLevel: student.pet_level, petExp: student.pet_exp })
-})
-
-// Evaluation Rules (只读无需认证，修改需要认证)
-app.get('/api/rules', (req, res) => {
-  const rules = db.prepare('SELECT * FROM evaluation_rules ORDER BY category, points DESC').all()
-  res.json({ rules })
-})
-
-app.post('/api/rules', authMiddleware, (req, res) => {
-  const { name, points, category } = req.body
-  const id = uuidv4()
-  const now = Date.now()
-  db.prepare('INSERT INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, 1, ?)').run(id, name, points, category, now)
-  res.json({ id, name, points, category, is_custom: 1, created_at: now })
-})
-
-app.delete('/api/rules/:id', authMiddleware, (req, res) => {
-  db.prepare('DELETE FROM evaluation_rules WHERE id = ? AND is_custom = 1').run(req.params.id)
-  res.json({ success: true })
-})
-
-// Evaluations
-app.post('/api/evaluations', authMiddleware, (req, res) => {
-  const { classId, studentId, points, reason, category } = req.body
-  
-  // 验证班级归属
-  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
-  if (!cls || cls.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权访问此班级' })
-  }
-  
-  const id = uuidv4()
-  const now = Date.now()
-  
-  // Insert record
-  db.prepare('INSERT INTO evaluation_records (id, class_id, student_id, points, reason, category, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)').run(id, classId, studentId, points, reason, category, now)
-  
-  // Update student points
-  db.prepare('UPDATE students SET total_points = total_points + ? WHERE id = ?').run(points, studentId)
-  
-  // Get student info (after update)
-  const student = db.prepare('SELECT * FROM students WHERE id = ?').get(studentId)
-  
-  // Update pet exp if student has a pet
-  if (student && student.pet_type) {
-    // pet_exp should always equal total_points (with minimum 0)
-    const newExp = Math.max(0, student.total_points)
-    
-    // Calculate new level based on exp (using the same function as withdrawal)
-    const newLevel = calculateLevel(newExp)
-    
-    // Check if pet graduated (reached level 8)
-    let graduated = false
-    if (newLevel === 8 && student.pet_level < 8) {
-      const badgeId = uuidv4()
-      db.prepare('INSERT INTO badges (id, student_id, pet_type, earned_at) VALUES (?, ?, ?, ?)').run(badgeId, studentId, student.pet_type, now)
-      graduated = true
-    }
-    
-    db.prepare('UPDATE students SET pet_exp = ?, pet_level = ? WHERE id = ?').run(newExp, newLevel, studentId)
-    
-    return res.json({ 
-      id, 
-      timestamp: now, 
-      petLevel: newLevel, 
-      petExp: newExp,
-      levelUp: newLevel > student.pet_level,
-      levelDown: newLevel < student.pet_level,
-      graduated
-    })
-  }
-  
-  res.json({ id, timestamp: now })
-})
-
-// Undo last evaluation
-app.delete('/api/evaluations/latest', authMiddleware, (req, res) => {
-  const { classId } = req.query
-  if (!classId) {
-    return res.status(400).json({ error: 'classId required' })
-  }
-  
-  // 验证班级归属
-  const cls = db.prepare('SELECT * FROM classes WHERE id = ?').get(classId)
-  if (!cls || cls.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权访问此班级' })
-  }
-  
-  // Get latest record
-  const record = db.prepare('SELECT * FROM evaluation_records WHERE class_id = ? ORDER BY timestamp DESC LIMIT 1').get(classId)
-  if (!record) {
-    return res.status(404).json({ error: 'No record found' })
-  }
-  
-  // Get student current data
-  const student = db.prepare('SELECT * FROM students WHERE id = ?').get(record.student_id)
-  
-  // Calculate new exp (exp is always positive based on absolute points)
-  const expChange = Math.abs(record.points)
-  const newExp = Math.max(0, student.pet_exp - expChange)
-  
-  // Recalculate level based on new exp
-  const newLevel = calculateLevel(newExp)
-  
-  // Undo points, exp and update level
-  db.prepare('UPDATE students SET total_points = total_points - ?, pet_exp = ?, pet_level = ? WHERE id = ?').run(record.points, newExp, newLevel, record.student_id)
-  
-  // Delete record
-  db.prepare('DELETE FROM evaluation_records WHERE id = ?').run(record.id)
-  
-  res.json({ success: true, undone: record })
-})
-
-// 删除指定评价记录
-app.delete('/api/evaluations/:id', authMiddleware, (req, res) => {
-  const { id } = req.params
-  
-  // Get record
-  const record = db.prepare(`
-    SELECT er.* FROM evaluation_records er
-    JOIN classes c ON er.class_id = c.id
-    WHERE er.id = ? AND c.user_id = ?
-  `).get(id, req.userId)
-  
-  if (!record) {
-    return res.status(404).json({ error: 'Record not found' })
-  }
-  
-  // Get student current data
-  const student = db.prepare('SELECT * FROM students WHERE id = ?').get(record.student_id)
-  
-  // Calculate new exp (exp is always positive based on absolute points)
-  const expChange = Math.abs(record.points)
-  const newExp = Math.max(0, student.pet_exp - expChange)
-  
-  // Recalculate level based on new exp
-  const newLevel = calculateLevel(newExp)
-  
-  // Undo points, exp and update level
-  db.prepare('UPDATE students SET total_points = total_points - ?, pet_exp = ?, pet_level = ? WHERE id = ?').run(record.points, newExp, newLevel, record.student_id)
-  
-  // Delete record
-  db.prepare('DELETE FROM evaluation_records WHERE id = ?').run(id)
-  
-  res.json({ success: true, undone: record })
-})
-
-app.get('/api/evaluations', authMiddleware, (req, res) => {
-  const { classId, studentId, page = 1, pageSize = 20 } = req.query
-  const offset = (Number(page) - 1) * Number(pageSize)
-  
-  let countQuery = 'SELECT COUNT(*) as total FROM evaluation_records er JOIN classes c ON er.class_id = c.id'
-  let query = 'SELECT er.*, s.name as student_name FROM evaluation_records er JOIN students s ON er.student_id = s.id JOIN classes c ON er.class_id = c.id'
-  const params = []
-  const countParams = []
-  
-  // 始终添加用户过滤
-  params.push(req.userId)
-  countParams.push(req.userId)
-  
-  // 支持按班级或学生筛选
-  const conditions = ['c.user_id = ?']
-  if (classId) {
-    conditions.push('er.class_id = ?')
-    params.push(classId)
-    countParams.push(classId)
-  }
-  if (studentId) {
-    conditions.push('er.student_id = ?')
-    params.push(studentId)
-    countParams.push(studentId)
-  }
-  
-  query += ' WHERE ' + conditions.join(' AND ')
-  countQuery += ' WHERE ' + conditions.join(' AND ')
-  
-  // Get total count
-  const totalResult = db.prepare(countQuery).get(...countParams)
-  const total = totalResult?.total || 0
-  
-  // Get paginated records
-  query += ' ORDER BY er.timestamp DESC LIMIT ? OFFSET ?'
-  params.push(Number(pageSize), offset)
-  
-  const records = db.prepare(query).all(...params)
-  res.json({ 
-    records, 
-    total,
-    page: Number(page),
-    pageSize: Number(pageSize),
-    totalPages: Math.ceil(total / Number(pageSize))
-  })
-})
-
-// Ranking
-app.get('/api/classes/:classId/ranking', authMiddleware, verifyClassOwnership, (req, res) => {
-  const ranking = db.prepare(`
-    SELECT s.*, 
-           (SELECT COUNT(*) FROM badges WHERE student_id = s.id) as badge_count
-    FROM students s
-    WHERE s.class_id = ?
-    ORDER BY s.total_points DESC, s.pet_level DESC
-  `).all(req.params.classId)
-  res.json({ ranking })
-})
-
-// Settings (只读)
-app.get('/api/settings', (req, res) => {
-  const settings = db.prepare('SELECT * FROM settings').all()
-  const result = {}
-  for (const s of settings) {
-    result[s.key] = JSON.parse(s.value)
-  }
-  res.json(result)
-})
-
-// Health (公开)
+// 健康检查（公开）
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() })
 })
 
-// Fix pet_exp for existing students
-app.post('/api/fix-exp', authMiddleware, (req, res) => {
-  // Sync pet_exp with total_points for students with pets (只处理当前用户的班级)
-  const result = db.prepare(`
-    UPDATE students SET pet_exp = MAX(0, total_points) 
-    WHERE pet_type IS NOT NULL 
-    AND class_id IN (SELECT id FROM classes WHERE user_id = ?)
-  `).run(req.userId)
-  res.json({ success: true, updated: result.changes })
-})
+// 初始化默认评价规则
+function initDefaultRules() {
+  const defaultRules = [
+    // 学习类 - 加分
+    { name: '作业完成优秀', points: 1, category: '学习' },
+    { name: '平时测验满分', points: 3, category: '学习' },
+    { name: '平时测验达优秀', points: 2, category: '学习' },
+    { name: '默写全对', points: 1, category: '学习' },
+    { name: '订正态度认真', points: 1, category: '学习' },
+    { name: '优秀作业,值得表扬', points: 1, category: '学习' },
+    { name: '近期学习状态进步', points: 1, category: '学习' },
+    { name: '被老师点名表扬', points: 1, category: '学习' },
+    { name: '单元测验显著进步', points: 2, category: '学习' },
+    // 学习类 - 扣分
+    { name: '不交作业', points: -1, category: '学习' },
+    { name: '未完成作业', points: -2, category: '学习' },
+    { name: '作业潦草', points: -1, category: '学习' },
+    { name: '订正不认真', points: -2, category: '学习' },
+    { name: '抄袭作业', points: -5, category: '学习' },
+    { name: '考试作弊', points: -5, category: '学习' },
+    { name: '学习显著退步', points: -2, category: '学习' },
+    // 行为类 - 加分
+    { name: '早读认真专注', points: 1, category: '行为' },
+    { name: '课前准备充分', points: 1, category: '行为' },
+    { name: '眼保健操全程认真', points: 1, category: '行为' },
+    { name: '升旗仪式安静整齐', points: 1, category: '行为' },
+    { name: '守纪表现优秀(被表扬)', points: 2, category: '行为' },
+    { name: '主动帮助同学', points: 2, category: '行为' },
+    { name: '拾金不昧(一般物品)', points: 2, category: '行为' },
+    { name: '拾金不昧(贵重物品)', points: 5, category: '行为' },
+    { name: '主动帮助生病同学', points: 3, category: '行为' },
+    { name: '主动调解同学矛盾、化解冲突', points: 3, category: '行为' },
+    { name: '做好人好事被学校提出表扬', points: 3, category: '行为' },
+    { name: '积极参与校内外志愿服务', points: 3, category: '行为' },
+    { name: '犯错主动认错,积极协商', points: 1, category: '行为' },
+    // 行为类 - 扣分
+    { name: '无故迟到或早退', points: -1, category: '行为' },
+    { name: '未佩戴红领巾,不穿校服', points: -1, category: '行为' },
+    { name: '私自旷课或课间操', points: -3, category: '行为' },
+    { name: '上课讲话、开小差', points: -1, category: '行为' },
+    { name: '扰乱课堂', points: -3, category: '行为' },
+    { name: '课间追逐打闹', points: -3, category: '行为' },
+    { name: '追逐打闹(酿成事故)', points: -3, category: '行为' },
+    { name: '中午自习说话、随意走动', points: -1, category: '行为' },
+    { name: '私自带玩具或零食或危险物品', points: -3, category: '行为' },
+    { name: '排队时说话或小动作不停,被点名', points: -1, category: '行为' },
+    { name: '传播脏话或不良歌谣', points: -5, category: '行为' },
+    { name: '撒谎、隐瞒真实情况', points: -2, category: '行为' },
+    { name: '说脏话,骂人,起绰号', points: -2, category: '行为' },
+    { name: '欺负、推搡、伤害同学', points: -10, category: '行为' },
+    { name: '挑拨离间、拉帮结派', points: -3, category: '行为' },
+    { name: '不尊重同学、孤立他人', points: -3, category: '行为' },
+    { name: '为私欲包庇犯错者', points: -3, category: '行为' },
+    { name: '恶意举报、诬陷他人', points: -3, category: '行为' },
+    { name: '破坏校园设施', points: -5, category: '行为' },
+    // 健康类 - 加分
+    { name: '认真完成包干区值日', points: 1, category: '健康' },
+    { name: '主动为班级擦黑板', points: 1, category: '健康' },
+    { name: '主动整理讲台', points: 1, category: '健康' },
+    { name: '主动整理黑板粉笔槽', points: 1, category: '健康' },
+    { name: '主动倒垃圾并套垃圾袋', points: 2, category: '健康' },
+    { name: '座位整洁无涂画,桌椅干净', points: 1, category: '健康' },
+    { name: '座位周围无垃圾', points: 1, category: '健康' },
+    // 健康类 - 扣分
+    { name: '打扫包干区时间玩耍,不认真', points: -2, category: '健康' },
+    { name: '个人座位卫生不合格', points: -1, category: '健康' },
+    { name: '校园内乱扔垃圾', points: -1, category: '健康' },
+    { name: '桌洞脏乱、物品杂乱', points: -1, category: '健康' },
+    { name: '破坏卫生、乱涂乱画', points: -2, category: '健康' },
+    { name: '浪费粮食', points: -2, category: '健康' },
+    { name: '破坏班级绿植、把玩绿植', points: -3, category: '健康' },
+    // 其他类 - 加分
+    { name: '主动整理图书、摆放整齐', points: 2, category: '其他' },
+    { name: '主动帮同学更换桌椅', points: 2, category: '其他' },
+    { name: '主动承担班级任务', points: 2, category: '其他' },
+    { name: '积极参加班级墙面布置', points: 2, category: '其他' },
+    { name: '积极参加班级或学校活动', points: 1, category: '其他' },
+    { name: '活动中表现优秀', points: 2, category: '其他' },
+    { name: '代表班级参赛', points: 3, category: '其他' },
+    { name: '校级比赛:一等奖', points: 5, category: '其他' },
+    { name: '校级比赛:二等奖', points: 4, category: '其他' },
+    { name: '校级比赛:三等奖', points: 3, category: '其他' },
+    { name: '区级及以上:一等奖', points: 8, category: '其他' },
+    { name: '区级及以上:二等奖', points: 6, category: '其他' },
+    { name: '区级及以上:三等奖', points: 4, category: '其他' },
+    { name: '联欢会或文艺汇演积极参与', points: 2, category: '其他' },
+    { name: '为班级争得荣誉', points: 5, category: '其他' },
+    { name: '小组全周无违纪、全员交作业', points: 2, category: '其他' },
+    // 其他类 - 扣分
+    { name: '损坏公物、乱刻乱画', points: -1, category: '其他' },
+    { name: '浪费水电、屡教不改', points: -1, category: '其他' },
+    { name: '故意玩弄损坏公共电器', points: -3, category: '其他' },
+    { name: '故意损坏卫生工具', points: -2, category: '其他' },
+    { name: '扣分严重/打架/作弊/严重违纪', points: -8, category: '其他' },
+  ]
 
-// Backup
-app.get('/api/backup', authMiddleware, (req, res) => {
-  const backup = {
-    version: '1.0.0',
-    exportedAt: new Date().toISOString(),
-    classes: db.prepare('SELECT * FROM classes WHERE user_id = ?').all(req.userId),
-    students: db.prepare(`
-      SELECT s.* FROM students s
-      JOIN classes c ON s.class_id = c.id
-      WHERE c.user_id = ?
-    `).all(req.userId),
-    rules: db.prepare('SELECT * FROM evaluation_rules').all(),
-    records: db.prepare(`
-      SELECT er.* FROM evaluation_records er
-      JOIN classes c ON er.class_id = c.id
-      WHERE c.user_id = ?
-    `).all(req.userId),
-    badges: db.prepare(`
-      SELECT b.* FROM badges b
-      JOIN students s ON b.student_id = s.id
-      JOIN classes c ON s.class_id = c.id
-      WHERE c.user_id = ?
-    `).all(req.userId),
-    settings: db.prepare('SELECT * FROM settings').all()
-  }
-  res.setHeader('Content-Disposition', `attachment; filename="pet-garden-backup-${Date.now()}.json"`)
-  res.json(backup)
-})
-
-// Restore
-app.post('/api/restore', authMiddleware, (req, res) => {
-  const { classes, students, rules, records, badges, settings } = req.body
-  
-  if (!classes || !students) {
-    return res.status(400).json({ error: 'Invalid backup data' })
-  }
-  
-  try {
-    // Clear existing data for current user
-    db.prepare('DELETE FROM evaluation_records WHERE class_id IN (SELECT id FROM classes WHERE user_id = ?)').run(req.userId)
-    db.prepare('DELETE FROM badges WHERE student_id IN (SELECT s.id FROM students s JOIN classes c ON s.class_id = c.id WHERE c.user_id = ?)').run(req.userId)
-    db.prepare('DELETE FROM students WHERE class_id IN (SELECT id FROM classes WHERE user_id = ?)').run(req.userId)
-    db.prepare('DELETE FROM classes WHERE user_id = ?').run(req.userId)
-    
-    // Restore classes (关联当前用户)
-    const insertClass = db.prepare('INSERT INTO classes (id, user_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
-    for (const c of classes) {
-      insertClass.run(c.id, req.userId, c.name, c.created_at, c.updated_at)
-    }
-    
-    // Restore students
-    const insertStudent = db.prepare('INSERT INTO students (id, class_id, name, student_no, total_points, pet_type, pet_level, pet_exp, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    for (const s of students) {
-      insertStudent.run(s.id, s.class_id, s.name, s.student_no, s.total_points, s.pet_type, s.pet_level, s.pet_exp, s.created_at)
-    }
-    
-    // Restore custom rules
-    if (rules) {
-      const insertRule = db.prepare('INSERT OR IGNORE INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-      for (const r of rules.filter(r => r.is_custom)) {
-        insertRule.run(r.id, r.name, r.points, r.category, r.is_custom, r.created_at)
-      }
-    }
-    
-    // Restore records
-    if (records) {
-      const insertRecord = db.prepare('INSERT INTO evaluation_records (id, class_id, student_id, points, reason, category, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      for (const r of records) {
-        insertRecord.run(r.id, r.class_id, r.student_id, r.points, r.reason, r.category, r.timestamp)
-      }
-    }
-    
-    // Restore badges
-    if (badges) {
-      const insertBadge = db.prepare('INSERT INTO badges (id, student_id, pet_type, earned_at) VALUES (?, ?, ?, ?)')
-      for (const b of badges) {
-        insertBadge.run(b.id, b.student_id, b.pet_type, b.earned_at)
-      }
-    }
-    
-    res.json({ success: true, message: '数据恢复成功' })
-  } catch (error) {
-    console.error('Restore error:', error)
-    res.status(500).json({ error: '恢复失败' })
-  }
-})
-
-// ==================== 用户认证 API ====================
-
-// 密码哈希函数（简单实现，生产环境应使用 bcrypt 等）
-function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex')
-}
-
-// 生成 JWT Token
-function generateToken(userId) {
-  const payload = { userId, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 } // 7天过期
-  return Buffer.from(JSON.stringify(payload)).toString('base64')
-}
-
-// 验证 Token
-function verifyToken(token) {
-  // 处理游客 token
-  if (token === 'guest') {
-    const guest = db.prepare('SELECT id FROM users WHERE username = ?').get('guest')
-    return guest ? guest.id : null
-  }
-  try {
-    const payload = JSON.parse(Buffer.from(token, 'base64').toString())
-    if (payload.exp < Date.now()) return null
-    return payload.userId
-  } catch {
-    return null
-  }
-}
-
-// 中间件：验证用户
-function authMiddleware(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '')
-  if (!token) {
-    return res.status(401).json({ error: '未登录' })
-  }
-  const userId = verifyToken(token)
-  if (!userId) {
-    return res.status(401).json({ error: '登录已过期' })
-  }
-  req.userId = userId
-  next()
-}
-
-// 注册
-app.post('/api/auth/register', (req, res) => {
-  const { username, password } = req.body
-  
-  if (!username || !password) {
-    return res.status(400).json({ error: '用户名和密码不能为空' })
-  }
-  
-  if (username.length < 3 || username.length > 20) {
-    return res.status(400).json({ error: '用户名长度3-20字符' })
-  }
-  
-  if (password.length < 6) {
-    return res.status(400).json({ error: '密码至少6位' })
-  }
-  
-  // 检查用户名是否已存在
-  const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(username)
-  if (existingUser) {
-    return res.status(400).json({ error: '用户名已存在' })
-  }
-  
-  const userId = crypto.randomUUID()
-  const passwordHash = hashPassword(password)
-  
-  db.prepare('INSERT INTO users (id, username, password_hash, is_guest, created_at) VALUES (?, ?, ?, ?, ?)')
-    .run(userId, username, passwordHash, 0, Date.now())
-  
-  const token = generateToken(userId)
-  res.json({ 
-    success: true, 
-    token, 
-    user: { id: userId, username, isGuest: false }
-  })
-})
-
-// 登录
-app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body
-  
-  if (!username || !password) {
-    return res.status(400).json({ error: '用户名和密码不能为空' })
-  }
-  
-  const user = db.prepare('SELECT id, username, password_hash, is_guest FROM users WHERE username = ?').get(username)
-  
-  if (!user) {
-    return res.status(401).json({ error: '用户名或密码错误' })
-  }
-  
-  const passwordHash = hashPassword(password)
-  if (passwordHash !== user.password_hash) {
-    return res.status(401).json({ error: '用户名或密码错误' })
-  }
-  
-  const token = generateToken(user.id)
-  res.json({ 
-    success: true, 
-    token, 
-    user: { id: user.id, username: user.username, isGuest: !!user.is_guest }
-  })
-})
-
-// 获取当前用户信息
-app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = db.prepare('SELECT id, username, is_guest FROM users WHERE id = ?').get(req.userId)
-  if (!user) {
-    return res.status(404).json({ error: '用户不存在' })
-  }
-  res.json({ 
-    user: { 
-      id: user.id, 
-      username: user.username, 
-      isGuest: !!user.is_guest 
-    }
-  })
-})
-
-// ==================== 修改班级 API（添加用户隔离） ====================
-
-// 获取班级列表（只返回当前用户的班级）
-app.get('/api/classes', authMiddleware, (req, res) => {
-  const classes = db.prepare('SELECT * FROM classes WHERE user_id = ? ORDER BY created_at DESC').all(req.userId)
-  res.json({ classes })
-})
-
-// 创建班级（关联当前用户）
-app.post('/api/classes', authMiddleware, (req, res) => {
-  const { name } = req.body
-  const id = crypto.randomUUID()
+  const insertRule = db.prepare('INSERT INTO evaluation_rules (id, name, points, category, is_custom, created_at) VALUES (?, ?, ?, ?, 0, ?)')
   const now = Date.now()
-  
-  db.prepare('INSERT INTO classes (id, user_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
-    .run(id, req.userId, name, now, now)
-  
-  res.json({ id, user_id: req.userId, name, created_at: now, updated_at: now })
-})
-
-// 更新班级
-app.put('/api/classes/:id', authMiddleware, (req, res) => {
-  const { name } = req.body
-  const classInfo = db.prepare('SELECT user_id FROM classes WHERE id = ?').get(req.params.id)
-  
-  if (!classInfo) {
-    return res.status(404).json({ error: '班级不存在' })
+  for (const rule of defaultRules) {
+    insertRule.run(uuidv4(), rule.name, rule.points, rule.category, now)
   }
-  if (classInfo.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权修改' })
-  }
-  
-  const now = Date.now()
-  db.prepare('UPDATE classes SET name = ?, updated_at = ? WHERE id = ?').run(name, now, req.params.id)
-  res.json({ success: true })
-})
-
-// 删除班级
-app.delete('/api/classes/:id', authMiddleware, (req, res) => {
-  const classInfo = db.prepare('SELECT user_id FROM classes WHERE id = ?').get(req.params.id)
-  
-  if (!classInfo) {
-    return res.status(404).json({ error: '班级不存在' })
-  }
-  if (classInfo.user_id !== req.userId) {
-    return res.status(403).json({ error: '无权删除' })
-  }
-  
-  // Delete students in this class first
-  db.prepare('DELETE FROM students WHERE class_id = ?').run(req.params.id)
-  db.prepare('DELETE FROM classes WHERE id = ?').run(req.params.id)
-  res.json({ success: true })
-})
+  console.log(`✅ 初始化 ${defaultRules.length} 条默认评价规则`)
+}
 
 // 错误处理
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err)
-  // 不退出进程，保持服务运行
 })
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason)
-  // 不退出进程，保持服务运行
 })
 
 // 启动服务器

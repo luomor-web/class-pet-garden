@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const dbPath = join(__dirname, 'pet-garden.db')
+// 支持测试模式使用内存数据库
+const dbPath = process.env.TEST_DB ? ':memory:' : join(__dirname, 'pet-garden.db')
 export const db = new Database(dbPath)
 
 // 初始化数据库表

@@ -11,28 +11,33 @@ const DEATH_THRESHOLD = -20
 
 // 检查宠物状态
 function checkPetStatus(totalPoints, currentStatus) {
-  // 死亡状态
+  // 死亡状态：积分 < -20
   if (totalPoints < DEATH_THRESHOLD) {
     if (currentStatus !== 'dead') {
       return { status: 'dead', died: true, revived: false, injured: false, healed: false }
     }
     return { status: 'dead', died: false, revived: false, injured: false, healed: false }
   }
-  // 受伤状态
+  
+  // 积分在 [-20, 0) 范围内
   if (totalPoints < 0) {
     const wasDead = currentStatus === 'dead'
-    const wasAlive = currentStatus === 'alive'
+    // 如果之前是死亡状态，保持死亡状态（不自动变成受伤）
     if (wasDead) {
-      return { status: 'injured', died: false, revived: true, injured: false, healed: false }
+      return { status: 'dead', died: false, revived: false, injured: false, healed: false }
     }
+    // 正常进入受伤状态
+    const wasAlive = currentStatus === 'alive'
     if (wasAlive) {
       return { status: 'injured', died: false, revived: false, injured: true, healed: false }
     }
     return { status: 'injured', died: false, revived: false, injured: false, healed: false }
   }
-  // 正常状态
-  const wasInjured = currentStatus === 'injured'
+  
+  // 积分 >= 0：正常状态
   const wasDead = currentStatus === 'dead'
+  const wasInjured = currentStatus === 'injured'
+  
   if (wasDead) {
     return { status: 'alive', died: false, revived: true, injured: false, healed: true }
   }

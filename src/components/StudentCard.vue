@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Student } from '@/types'
-import { getPetType, getLevelProgress, getPetLevelImage, calculateLevel, DEATH_THRESHOLD } from '@/data/pets'
+import { getPetType, getLevelProgress, getPetLevelImage, calculateLevel, DEATH_THRESHOLD, checkPetStatus } from '@/data/pets'
 import PetImage from './PetImage.vue'
 
 defineProps<{
@@ -47,31 +47,37 @@ function getStudentPetImage(student: Student): string {
 }
 
 function getPetStatus(student: Student): 'alive' | 'injured' | 'dead' {
-  if (student.total_points < DEATH_THRESHOLD) return 'dead'
-  if (student.total_points < 0) return 'injured'
-  return 'alive'
+  // 优先使用后端返回的状态
+  if (student.pet_status) {
+    return student.pet_status
+  }
+  // 兼容旧数据
+  return checkPetStatus(student.total_points)
 }
 
 function getStatusInfo(student: Student) {
   const status = getPetStatus(student)
   if (status === 'dead') {
+    // 复活需要积分 >= 0
+    const pointsNeeded = -student.total_points
     return {
       emoji: '💀',
       text: '已死亡',
       bgClass: 'bg-gray-600',
       cardClass: 'opacity-75 grayscale-[30%]',
       progressColor: 'from-gray-400 to-gray-500',
-      statusText: `积满 ${-student.total_points} 分复活`
+      statusText: `距离复活还需 ${pointsNeeded} 分`
     }
   }
   if (status === 'injured') {
+    const pointsNeeded = -student.total_points
     return {
       emoji: '🩹',
       text: '受伤中',
       bgClass: 'bg-orange-500',
       cardClass: 'opacity-90',
       progressColor: 'from-orange-400 to-red-400',
-      statusText: `还差 ${-student.total_points} 分恢复`
+      statusText: `还差 ${pointsNeeded} 分恢复`
     }
   }
   return {
@@ -88,13 +94,19 @@ function getStatusInfo(student: Student) {
 function getHealthProgress(student: Student): number {
   const status = getPetStatus(student)
   if (status === 'dead') {
-    // 从死亡阈值到0的进度
+    // 死亡状态下，从 DEATH_THRESHOLD 到 0 的进度
+    // 例如：积分 -30，阈值 -20，进度 = (-30 - (-20)) / (0 - (-20)) = -10 / 20 = 0
+    // 积分 -20，进度 = 0
+    // 积分 -10，进度 = (-10 - (-20)) / 20 = 10/20 = 50%
+    // 积分 0，进度 = 100%
     const progress = (student.total_points - DEATH_THRESHOLD) / (-DEATH_THRESHOLD) * 100
     return Math.min(100, Math.max(0, progress))
   }
   if (status === 'injured') {
-    // 从0到恢复的进度（负分->0）
-    return Math.min(100, Math.max(0, (1 - (-student.total_points / Math.abs(DEATH_THRESHOLD))) * 100))
+    // 受伤状态下，从 0 到恢复的进度
+    // 积分 -10，进度 = (0 - (-10)) / 20 = 10/20 = 50%
+    const progress = (0 - student.total_points) / (-DEATH_THRESHOLD) * 100
+    return Math.min(100, Math.max(0, progress))
   }
   return 100
 }

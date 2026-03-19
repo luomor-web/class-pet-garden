@@ -6,6 +6,7 @@ const { showAnimation, animationInfo, animationPhase, getPetImage } = usePetStat
 
 // 动画配置
 const config = computed(() => {
+  const pointsNeeded = Math.max(0, -animationInfo.value.totalPoints)
   const configs = {
     injured: {
       title: '宠物受伤了！',
@@ -19,7 +20,7 @@ const config = computed(() => {
     },
     death: {
       title: '宠物死亡...',
-      subtitle: '积满 20 分可以复活',
+      subtitle: pointsNeeded > 0 ? `还需 ${pointsNeeded} 分可以复活` : '即将复活！',
       borderColor: 'border-gray-400',
       shadowColor: 'shadow-gray-400/50',
       gradientFrom: 'from-gray-300',

@@ -359,21 +359,23 @@ async function handleEvaluate(rule: Rule) {
     if (res.data.graduated) {
       toast.success(`🎓 恭喜！${selectedStudent.value.name} 的宠物毕业了！`)
     }
+    // 计算新的总积分
+    const newTotalPoints = selectedStudent.value.total_points + rule.points
     // 死亡动画
     if (res.data.died) {
-      triggerPetStatusAnimation('death', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'injured', 'dead')
+      triggerPetStatusAnimation('death', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'injured', 'dead', newTotalPoints)
     }
     // 受伤动画
     else if (res.data.injured) {
-      triggerPetStatusAnimation('injured', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'alive', 'injured')
+      triggerPetStatusAnimation('injured', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'alive', 'injured', newTotalPoints)
     }
     // 复活动画
     else if (res.data.revived) {
-      triggerPetStatusAnimation('revive', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'dead', 'alive')
+      triggerPetStatusAnimation('revive', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'dead', 'alive', newTotalPoints)
     }
     // 恢复动画
     else if (res.data.healed && !res.data.revived) {
-      triggerPetStatusAnimation('heal', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'injured', 'alive')
+      triggerPetStatusAnimation('heal', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'injured', 'alive', newTotalPoints)
     }
     showEvalModal.value = false
     await loadStudents()
@@ -396,21 +398,23 @@ async function handleDetailEvaluate(rule: Rule) {
     if (res.data.levelUp) {
       triggerLevelUp(detailStudent.value.name, res.data.petLevel, detailStudent.value.pet_type || '', res.data.petLevel - 1)
     }
+    // 计算新的总积分
+    const newTotalPoints = detailStudent.value.total_points + rule.points
     // 死亡动画
     if (res.data.died) {
-      triggerPetStatusAnimation('death', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'injured', 'dead')
+      triggerPetStatusAnimation('death', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'injured', 'dead', newTotalPoints)
     }
     // 受伤动画
     else if (res.data.injured) {
-      triggerPetStatusAnimation('injured', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'alive', 'injured')
+      triggerPetStatusAnimation('injured', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'alive', 'injured', newTotalPoints)
     }
     // 复活动画
     else if (res.data.revived) {
-      triggerPetStatusAnimation('revive', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'dead', 'alive')
+      triggerPetStatusAnimation('revive', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'dead', 'alive', newTotalPoints)
     }
     // 恢复动画
     else if (res.data.healed && !res.data.revived) {
-      triggerPetStatusAnimation('heal', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'injured', 'alive')
+      triggerPetStatusAnimation('heal', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'injured', 'alive', newTotalPoints)
     }
     await loadStudents()
     closeDetailPanel()

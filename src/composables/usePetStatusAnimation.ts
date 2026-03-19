@@ -11,6 +11,7 @@ interface PetStatusAnimation {
   petLevel: number
   fromStatus: PetStatus
   toStatus: PetStatus
+  totalPoints: number
 }
 
 // 全局状态（单例模式）
@@ -21,7 +22,8 @@ const animationInfo = ref<PetStatusAnimation>({
   petType: '',
   petLevel: 1,
   fromStatus: 'alive',
-  toStatus: 'injured'
+  toStatus: 'injured',
+  totalPoints: 0
 })
 const animationPhase = ref<'start' | 'effect' | 'end'>('start')
 
@@ -32,9 +34,10 @@ export function usePetStatusAnimation() {
     petType: string,
     petLevel: number,
     fromStatus: PetStatus,
-    toStatus: PetStatus
+    toStatus: PetStatus,
+    totalPoints: number = 0
   ) {
-    animationInfo.value = { type, name, petType, petLevel, fromStatus, toStatus }
+    animationInfo.value = { type, name, petType, petLevel, fromStatus, toStatus, totalPoints }
     animationPhase.value = 'start'
     showAnimation.value = true
 
@@ -50,30 +53,47 @@ export function usePetStatusAnimation() {
   }
 
   function getAnimationConfig() {
-    const configs: Record<AnimationType, { emoji: string; title: string; colorClass: string; bgColor: string }> = {
+    const pointsNeeded = Math.max(0, -animationInfo.value.totalPoints)
+    const configs = {
       injured: {
-        emoji: '🩹',
-        title: '宠物受伤了',
-        colorClass: 'text-orange-500',
-        bgColor: 'bg-gradient-to-br from-orange-100 to-red-100'
+        title: '宠物受伤了！',
+        subtitle: '快加油恢复吧！',
+        borderColor: 'border-orange-400',
+        shadowColor: 'shadow-orange-400/50',
+        gradientFrom: 'from-orange-300',
+        gradientTo: 'to-red-300',
+        textColor: 'text-orange-500',
+        emoji: '🩹'
       },
       death: {
-        emoji: '💀',
-        title: '宠物死亡',
-        colorClass: 'text-gray-600',
-        bgColor: 'bg-gradient-to-br from-gray-200 to-gray-300'
+        title: '宠物死亡...',
+        subtitle: pointsNeeded > 0 ? `还需 ${pointsNeeded} 分可以复活` : '即将复活！',
+        borderColor: 'border-gray-400',
+        shadowColor: 'shadow-gray-400/50',
+        gradientFrom: 'from-gray-300',
+        gradientTo: 'to-gray-400',
+        textColor: 'text-gray-600',
+        emoji: '💀'
       },
       revive: {
-        emoji: '✨',
         title: '宠物复活了！',
-        colorClass: 'text-green-500',
-        bgColor: 'bg-gradient-to-br from-green-100 to-emerald-100'
+        subtitle: '太棒了！继续加油！',
+        borderColor: 'border-green-400',
+        shadowColor: 'shadow-green-400/50',
+        gradientFrom: 'from-green-300',
+        gradientTo: 'to-emerald-300',
+        textColor: 'text-green-500',
+        emoji: '✨'
       },
       heal: {
-        emoji: '💚',
         title: '恢复健康！',
-        colorClass: 'text-green-500',
-        bgColor: 'bg-gradient-to-br from-green-100 to-teal-100'
+        subtitle: '宠物状态良好',
+        borderColor: 'border-teal-400',
+        shadowColor: 'shadow-teal-400/50',
+        gradientFrom: 'from-teal-300',
+        gradientTo: 'to-cyan-300',
+        textColor: 'text-teal-500',
+        emoji: '💚'
       }
     }
     return configs[animationInfo.value.type]

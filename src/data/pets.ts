@@ -79,23 +79,26 @@ export function getPetLevelImage(petId: string, level: number): string {
 // 死亡阈值
 export const DEATH_THRESHOLD = -20
 
-// 检查宠物状态（前端判断用）
-export function checkPetStatus(totalPoints: number, currentStatus?: string): 'alive' | 'injured' | 'dead' {
-  // 如果当前是死亡状态，且积分还没到0，保持死亡
-  if (currentStatus === 'dead' && totalPoints < 0) {
-    return 'dead'
-  }
-  // 积分 < -20 死亡
+// 检查宠物状态（前端判断用，与后端逻辑一致）
+export function checkPetStatus(totalPoints: number, currentStatus?: string | null): 'alive' | 'injured' | 'dead' {
+  // 处理 NULL 或 undefined 的情况
+  const status = currentStatus || 'alive'
+  
+  // 积分 < -20：死亡状态
   if (totalPoints < DEATH_THRESHOLD) {
     return 'dead'
   }
-  // 积分 < 0 受伤（但如果之前是死亡状态，保持死亡）
+  
+  // 积分 < 0：受伤或保持死亡
   if (totalPoints < 0) {
-    if (currentStatus === 'dead') {
+    // 如果之前是死亡状态，保持死亡状态
+    if (status === 'dead') {
       return 'dead'
     }
     return 'injured'
   }
+  
+  // 积分 >= 0：正常状态
   return 'alive'
 }
 

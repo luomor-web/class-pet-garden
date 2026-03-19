@@ -47,12 +47,9 @@ function getStudentPetImage(student: Student): string {
 }
 
 function getPetStatus(student: Student): 'alive' | 'injured' | 'dead' {
-  // 优先使用后端返回的状态
-  if (student.pet_status) {
-    return student.pet_status
-  }
-  // 兼容旧数据
-  return checkPetStatus(student.total_points)
+  // 使用前端计算的状态（与后端逻辑一致）
+  // 这样可以保证状态实时正确
+  return checkPetStatus(student.total_points, student.pet_status)
 }
 
 function getStatusInfo(student: Student) {

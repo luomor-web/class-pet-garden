@@ -236,7 +236,8 @@ router.delete('/:id', authMiddleware, (req, res) => {
 
 // 获取用户最常用的规则（从评价记录统计）
 router.get('/frequent', authMiddleware, (req, res) => {
-  // 只返回当前用户还存在的规则，先展示加分规则，再展示减分规则
+  // 只返回当前用户还存在的规则（包括用户自己的规则和公共规则）
+  // 先展示加分规则，再展示减分规则
   const frequentRules = db.prepare(`
     SELECT 
       er.reason as name,
@@ -247,7 +248,7 @@ router.get('/frequent', authMiddleware, (req, res) => {
     WHERE er.user_id = ?
     AND EXISTS (
       SELECT 1 FROM evaluation_rules r 
-      WHERE r.user_id = ? 
+      WHERE (r.user_id = ? OR r.user_id IS NULL)
       AND r.name = er.reason 
       AND r.points = er.points
     )

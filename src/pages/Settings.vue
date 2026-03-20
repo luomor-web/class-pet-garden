@@ -20,6 +20,7 @@ const toast = useToast()
 const { confirmDialog, showConfirm, closeConfirm } = useConfirm()
 
 const activeTab = ref<'rules' | 'tags'>('rules')
+const isLoading = ref(true)
 const classes = ref<Class[]>([])
 const currentClass = ref<Class | null>(null)
 const rules = ref<Rule[]>([])
@@ -236,12 +237,15 @@ async function loadClasses() {
   }
 }
 
-onMounted(() => {
-  loadClasses()
-  loadRules()
-  loadTags()
-  // 随机选一个颜色
-  newTagColor.value = presetColors[Math.floor(Math.random() * presetColors.length)]
+onMounted(async () => {
+  isLoading.value = true
+  try {
+    await Promise.all([loadClasses(), loadRules(), loadTags()])
+    // 随机选一个颜色
+    newTagColor.value = presetColors[Math.floor(Math.random() * presetColors.length)]
+  } finally {
+    isLoading.value = false
+  }
 })
 </script>
 
@@ -256,6 +260,15 @@ onMounted(() => {
     />
 
     <main class="flex-1 max-w-4xl mx-auto p-6 w-full">
+      <!-- 加载中 -->
+      <div v-if="isLoading" class="flex items-center justify-center py-20">
+        <div class="text-center">
+          <div class="text-6xl animate-bounce mb-4">⚙️</div>
+          <div class="text-gray-500">加载中...</div>
+        </div>
+      </div>
+
+      <template v-else>
       <!-- Tab 切换 -->
       <div class="flex gap-2 mb-6">
         <button
@@ -497,6 +510,7 @@ onMounted(() => {
           <div class="text-5xl mb-4">🏷️</div>
           暂无标签，添加标签用于给学生分类标记
         </div>
+      </template>
       </template>
     </main>
 

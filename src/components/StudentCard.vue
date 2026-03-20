@@ -64,8 +64,8 @@ function getStatusInfo(student: Student) {
   const status = getPetStatus(student)
   if (status === 'dead') {
     return {
-      emoji: '💀',
-      text: '已死亡',
+      emoji: '😴',
+      text: '休眠中',
       cardClass: 'opacity-75 grayscale-[30%]',
     }
   }
@@ -106,7 +106,7 @@ function getHealthProgress(student: Student): number {
     }]"
     @click="$emit('click')"
   >
-    <!-- 死亡/受伤遮罩 -->
+    <!-- 休眠/受伤遮罩 -->
     <div
       v-if="getPetStatus(student) !== 'alive'"
       class="absolute inset-0 z-10 pointer-events-none"
@@ -200,7 +200,7 @@ function getHealthProgress(student: Student): number {
           v-if="getPetStatus(student) === 'dead'"
           class="absolute bottom-3 right-3 font-bold px-3 py-1 rounded-full shadow-lg bg-gray-600 text-white text-sm"
         >
-          💀 已死亡
+          😴 休眠中
         </div>
         <div
           v-else-if="getPetStatus(student) === 'injured'"
@@ -237,9 +237,9 @@ function getHealthProgress(student: Student): number {
       <!-- 成长值 + 积分 -->
       <div class="flex items-center justify-between text-sm mb-3">
         <span class="text-gray-500 flex items-center gap-1">
-          <!-- 死亡状态 -->
+          <!-- 休眠状态 -->
           <template v-if="getPetStatus(student) === 'dead'">
-            <span class="text-xs text-gray-400 font-medium">距离复活还需 {{ -student.total_points }} 分</span>
+            <span class="text-xs text-gray-400 font-medium">距离苏醒还需 {{ -student.total_points }} 分</span>
           </template>
           <!-- 受伤状态 -->
           <template v-else-if="getPetStatus(student) === 'injured'">

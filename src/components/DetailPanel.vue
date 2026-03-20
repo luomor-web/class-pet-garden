@@ -54,7 +54,7 @@ function formatDate(timestamp: number) {
               <img
                 v-if="student.pet_type"
                 :src="getStudentPetImage(student)"
-                class="w-24 h-24 object-contain"
+                class="w-full h-full object-cover"
               />
               <span v-else class="text-5xl">❓</span>
             </div>

@@ -19,17 +19,17 @@ const config = computed(() => {
       emoji: '🩹'
     },
     death: {
-      title: '宠物死亡...',
-      subtitle: pointsNeeded > 0 ? `还需 ${pointsNeeded} 分可以复活` : '即将复活！',
+      title: '宠物休眠了',
+      subtitle: pointsNeeded > 0 ? `还需 ${pointsNeeded} 分可以苏醒` : '即将苏醒！',
       borderColor: 'border-gray-400',
       shadowColor: 'shadow-gray-400/50',
       gradientFrom: 'from-gray-300',
       gradientTo: 'to-gray-400',
       textColor: 'text-gray-600',
-      emoji: '💀'
+      emoji: '😴'
     },
     revive: {
-      title: '宠物复活了！',
+      title: '宠物苏醒了！',
       subtitle: '太棒了！继续加油！',
       borderColor: 'border-green-400',
       shadowColor: 'shadow-green-400/50',

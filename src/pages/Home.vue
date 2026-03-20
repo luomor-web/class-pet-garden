@@ -490,6 +490,15 @@ function cancelBatchMode() {
   selectedStudents.value = new Set()
 }
 
+function selectAllFiltered() {
+  // 按当前筛选结果全选
+  const newSet = new Set(selectedStudents.value)
+  for (const student of filteredStudents.value) {
+    newSet.add(student.id)
+  }
+  selectedStudents.value = newSet
+}
+
 function toggleStudentSelect(studentId: string) {
   const newSet = new Set(selectedStudents.value)
   if (newSet.has(studentId)) newSet.delete(studentId)
@@ -731,13 +740,20 @@ onActivated(() => {
         >
           ✅ 批量评价
         </button>
-        <button
-          v-if="batchMode"
-          @click="cancelBatchMode"
-          class="px-4 py-2 bg-orange-500 text-white rounded-xl font-medium text-sm shadow-sm hover:bg-orange-600 transition-all"
-        >
-          ✕ 退出批量评价
-        </button>
+        <template v-if="batchMode">
+          <button
+            @click="selectAllFiltered"
+            class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-sm shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all"
+          >
+            📋 全选 ({{ filteredStudents.length }})
+          </button>
+          <button
+            @click="cancelBatchMode"
+            class="px-4 py-2 bg-orange-500 text-white rounded-xl font-medium text-sm shadow-sm hover:bg-orange-600 transition-all"
+          >
+            ✕ 退出批量评价
+          </button>
+        </template>
       </div>
 
       <Transition name="fade" mode="out-in">

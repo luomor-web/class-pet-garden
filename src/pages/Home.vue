@@ -26,7 +26,6 @@ import StudentModal from '@/components/modals/StudentModal.vue'
 import ImportModal from '@/components/modals/ImportModal.vue'
 import EvaluationModal from '@/components/modals/EvaluationModal.vue'
 import PetModal from '@/components/modals/PetModal.vue'
-import RecordsModal from '@/components/modals/RecordsModal.vue'
 import PetStatusModal from '@/components/PetStatusModal.vue'
 
 // Auth & Toast
@@ -38,7 +37,7 @@ const { triggerAnimation: triggerPetStatusAnimation } = usePetStatusAnimation()
 
 // 使用全局状态
 const { classes, currentClass, loadClasses } = useClasses()
-const { students, loadStudents, addStudent: doAddStudent, importStudents: doImportStudents, changePet, batchEvaluate, addEvaluation, undoEvaluation } = useStudents()
+const { students, loadStudents, addStudent: doAddStudent, importStudents: doImportStudents, changePet, batchEvaluate, addEvaluation } = useStudents()
 const { allTags, loadTags, getStudentTags } = useTags()
 const { showLoginModal, closeLoginModal } = useLoginModal()
 
@@ -59,7 +58,6 @@ const showStudentModal = ref(false)
 const showImportModal = ref(false)
 const showEvalModal = ref(false)
 const showPetModal = ref(false)
-const showRecordsModal = ref(false)
 const showDetailPanel = ref(false)
 const selectedStudent = ref<Student | null>(null)
 const detailStudent = ref<Student | null>(null)
@@ -68,12 +66,6 @@ const studentRecords = ref<EvaluationRecord[]>([])
 // Batch mode
 const batchMode = ref(false)
 const selectedStudents = ref<Set<string>>(new Set())
-
-// Evaluation records
-const evaluationRecords = ref<EvaluationRecord[]>([])
-const recordsPage = ref(1)
-const totalRecords = ref(0)
-const totalPages = ref(0)
 
 // Score animations
 const scoreAnimations = ref<Map<string, { points: number; show: boolean }>>(new Map())
@@ -190,8 +182,41 @@ function triggerScoreAnimation(studentId: string, points: number) {
   setTimeout(() => scoreAnimations.value.delete(studentId), 1500)
 }
 
+function handlePetStatusChange(res: any, student: Student, pointsDelta: number) {
+  const newTotalPoints = student.total_points + pointsDelta
+  if (res?.died) {
+    triggerPetStatusAnimation('death', student.name, student.pet_type || '', student.pet_level || 1, 'injured', 'dead', newTotalPoints)
+  } else if (res?.injured) {
+    triggerPetStatusAnimation('injured', student.name, student.pet_type || '', student.pet_level || 1, 'alive', 'injured', newTotalPoints)
+  } else if (res?.revived) {
+    triggerPetStatusAnimation('revive', student.name, student.pet_type || '', student.pet_level || 1, 'dead', 'alive', newTotalPoints)
+  } else if (res?.healed && !res.revived) {
+    triggerPetStatusAnimation('heal', student.name, student.pet_type || '', student.pet_level || 1, 'injured', 'alive', newTotalPoints)
+  }
+}
+
+async function doEvaluate(student: Student, rule: Rule) {
+  try {
+    const res = await addEvaluation(student.id, { points: rule.points, name: rule.name, category: rule.category })
+    triggerScoreAnimation(student.id, rule.points)
+    if (res?.levelUp) {
+      triggerLevelUp(student.name, res.petLevel, student.pet_type || '', res.petLevel - 1)
+    }
+    if (res?.graduated) {
+      toast.success(`🎓 恭喜！${student.name} 的宠物毕业了！`)
+    }
+    handlePetStatusChange(res, student, rule.points)
+    return res
+  } catch (error) {
+    toast.error('评价失败')
+    return null
+  }
+}
+
 async function handleEvaluate(rule: Rule) {
   if (!currentClass.value) return
+
+  // 批量评价模式
   if (!selectedStudent.value) {
     const studentIds = Array.from(selectedStudents.value)
     try {
@@ -208,52 +233,18 @@ async function handleEvaluate(rule: Rule) {
     return
   }
 
-  try {
-    const res = await addEvaluation(selectedStudent.value.id, { points: rule.points, name: rule.name, category: rule.category })
-    triggerScoreAnimation(selectedStudent.value.id, rule.points)
-    if (res?.levelUp) {
-      triggerLevelUp(selectedStudent.value.name, res.petLevel, selectedStudent.value.pet_type || '', res.petLevel - 1)
-    }
-    if (res?.graduated) {
-      toast.success(`🎓 恭喜！${selectedStudent.value.name} 的宠物毕业了！`)
-    }
-    const newTotalPoints = selectedStudent.value.total_points + rule.points
-    if (res?.died) {
-      triggerPetStatusAnimation('death', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'injured', 'dead', newTotalPoints)
-    } else if (res?.injured) {
-      triggerPetStatusAnimation('injured', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'alive', 'injured', newTotalPoints)
-    } else if (res?.revived) {
-      triggerPetStatusAnimation('revive', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'dead', 'alive', newTotalPoints)
-    } else if (res?.healed && !res.revived) {
-      triggerPetStatusAnimation('heal', selectedStudent.value.name, selectedStudent.value.pet_type || '', selectedStudent.value.pet_level || 1, 'injured', 'alive', newTotalPoints)
-    }
+  // 单个学生评价
+  const res = await doEvaluate(selectedStudent.value, rule)
+  if (res) {
     showEvalModal.value = false
-  } catch (error) {
-    toast.error('评价失败')
   }
 }
 
 async function handleDetailEvaluate(rule: Rule) {
   if (!detailStudent.value || !currentClass.value) return
-  try {
-    const res = await addEvaluation(detailStudent.value.id, { points: rule.points, name: rule.name, category: rule.category })
-    triggerScoreAnimation(detailStudent.value.id, rule.points)
-    if (res?.levelUp) {
-      triggerLevelUp(detailStudent.value.name, res.petLevel, detailStudent.value.pet_type || '', res.petLevel - 1)
-    }
-    const newTotalPoints = detailStudent.value.total_points + rule.points
-    if (res?.died) {
-      triggerPetStatusAnimation('death', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'injured', 'dead', newTotalPoints)
-    } else if (res?.injured) {
-      triggerPetStatusAnimation('injured', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'alive', 'injured', newTotalPoints)
-    } else if (res?.revived) {
-      triggerPetStatusAnimation('revive', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'dead', 'alive', newTotalPoints)
-    } else if (res?.healed && !res.revived) {
-      triggerPetStatusAnimation('heal', detailStudent.value.name, detailStudent.value.pet_type || '', detailStudent.value.pet_level || 1, 'injured', 'alive', newTotalPoints)
-    }
+  const res = await doEvaluate(detailStudent.value, rule)
+  if (res) {
     closeDetailPanel()
-  } catch (error) {
-    toast.error('评价失败')
   }
 }
 
@@ -317,36 +308,6 @@ function toggleStudentSelect(studentId: string) {
   selectedStudents.value = newSet
 }
 
-// 记录
-async function loadEvaluationRecords() {
-  if (!currentClass.value) return
-  const res = await api.get(`/evaluations?classId=${currentClass.value.id}&page=${recordsPage.value}&pageSize=20`)
-  evaluationRecords.value = res.data.records
-  totalRecords.value = res.data.total
-  totalPages.value = res.data.totalPages
-}
-
-async function handleUndoLastEvaluation(recordId?: string) {
-  if (!currentClass.value) return
-  showConfirm({
-    title: '撤回评价',
-    message: '确定要撤回这条评价吗？',
-    confirmText: '撤回',
-    type: 'warning',
-    onConfirm: async () => {
-      try {
-        const res = await undoEvaluation(recordId)
-        if (res?.success) {
-          toast.success(`已撤回：${res.undone.points > 0 ? '+' : ''}${res.undone.points}分`)
-          await loadEvaluationRecords()
-        }
-      } catch (error) {
-        toast.error('撤回失败')
-      }
-    }
-  })
-}
-
 onMounted(async () => {
   try {
     await loadClasses()
@@ -382,9 +343,6 @@ onActivated(() => {
 
     <!-- Pet Status Modal -->
     <PetStatusModal />
-
-    <!-- Header -->
-    <Header v-if="isLoaded" :batch-mode="batchMode" />
 
     <!-- Main Content -->
     <div v-if="isLoaded" class="overflow-auto">
@@ -494,7 +452,6 @@ onActivated(() => {
     <ImportModal :show="showImportModal" @close="showImportModal = false" @submit="importStudents" />
     <EvaluationModal :show="showEvalModal" :selected-count="selectedStudents.size" :rules="rules" @close="showEvalModal = false" @evaluate="handleEvaluate" />
     <PetModal :show="showPetModal" :student="selectedStudent" @close="showPetModal = false; selectedStudent = null" @select="selectPet" />
-    <RecordsModal :show="showRecordsModal" :records="evaluationRecords" :total-records="totalRecords" :page="recordsPage" :total-pages="totalPages" @close="showRecordsModal = false" @undo="handleUndoLastEvaluation" @prev-page="recordsPage--; loadEvaluationRecords()" @next-page="recordsPage++; loadEvaluationRecords()" @go-to-page="recordsPage = $event; loadEvaluationRecords()" />
     <DetailPanel :show="showDetailPanel" :student="detailStudent" :rules="rules" :student-records="studentRecords" @close="closeDetailPanel" @change-pet="showDetailPanel = false; selectedStudent = detailStudent; showPetModal = true" @evaluate="handleDetailEvaluate" />
     <ConfirmDialog :show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :confirm-text="confirmDialog.confirmText" :cancel-text="confirmDialog.cancelText" :type="confirmDialog.type" @confirm="confirmDialog.onConfirm" @cancel="closeConfirm" />
     <AuthModal :show="showLoginModal" @close="closeLoginModal" @login="handleLogin($event)" />

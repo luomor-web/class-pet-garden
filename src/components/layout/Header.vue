@@ -24,9 +24,14 @@ function isActive(path: string) {
 
 function handleLogin() {
   showUserMenu.value = false
-  // 如果不在首页，跳转到首页并弹出登录弹窗
+  // 用 localStorage 传递信号
+  localStorage.setItem('pet-garden-show-login', '1')
+  // 跳转到首页
   if (route.path !== '/') {
-    router.push('/?showLogin=1')
+    router.push('/')
+  } else {
+    // 已经在首页，触发 storage 事件
+    window.dispatchEvent(new StorageEvent('storage', { key: 'pet-garden-show-login', newValue: '1' }))
   }
 }
 

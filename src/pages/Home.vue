@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onActivated, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
 import type { Student, Class, Rule, EvaluationRecord } from '@/types'
 import { useAuth, setGlobalErrorHandler } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
@@ -574,12 +573,10 @@ onMounted(async () => {
     await loadTags()
     lastDataVersion.value = getDataVersion()
     
-    // 检测 URL 参数，自动弹出登录弹窗
-    const route = useRoute()
-    if (route.query.showLogin === '1') {
+    // 检测登录弹窗信号
+    if (localStorage.getItem('pet-garden-show-login') === '1') {
+      localStorage.removeItem('pet-garden-show-login')
       showAuthModal.value = true
-      // 清除 URL 参数
-      window.history.replaceState({}, '', window.location.pathname)
     }
   } finally {
     isLoading.value = false
@@ -587,7 +584,16 @@ onMounted(async () => {
   }
 })
 
+// 监听登录弹窗信号
+function checkShowLogin() {
+  if (localStorage.getItem('pet-garden-show-login') === '1') {
+    localStorage.removeItem('pet-garden-show-login')
+    showAuthModal.value = true
+  }
+}
+
 onActivated(() => {
+  checkShowLogin()
   // 检测数据版本是否变化（其他页面修改了数据）
   const currentVersion = getDataVersion()
   if (currentVersion > lastDataVersion.value) {

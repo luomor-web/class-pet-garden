@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onActivated, nextTick } from 'vue'
 import type { Student, Rule, EvaluationRecord, Tag } from '@/types'
 import { useAuth, setGlobalErrorHandler } from '@/composables/useAuth'
 import { useClasses } from '@/composables/useClasses'
@@ -9,6 +9,7 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLevelUp } from '@/composables/useLevelUp'
 import { usePetStatusAnimation } from '@/composables/usePetStatusAnimation'
+import { useLoginModal } from '@/composables/useLoginModal'
 import { getPetType } from '@/data/pets'
 import { matchByPinyin } from '@/utils/pinyin'
 
@@ -39,6 +40,7 @@ const { triggerAnimation: triggerPetStatusAnimation } = usePetStatusAnimation()
 const { classes, currentClass, loadClasses } = useClasses()
 const { students, isLoading, loadStudents, addStudent: doAddStudent, importStudents: doImportStudents, changePet, batchEvaluate, addEvaluation, undoEvaluation } = useStudents()
 const { allTags, loadTags, getStudentTags } = useTags()
+const { showLoginModal, closeLoginModal } = useLoginModal()
 
 // 设置全局错误处理器
 setGlobalErrorHandler((message) => {
@@ -59,7 +61,6 @@ const showEvalModal = ref(false)
 const showPetModal = ref(false)
 const showRecordsModal = ref(false)
 const showDetailPanel = ref(false)
-const showAuthModal = ref(false)
 const selectedStudent = ref<Student | null>(null)
 const detailStudent = ref<Student | null>(null)
 const studentRecords = ref<EvaluationRecord[]>([])
@@ -346,44 +347,21 @@ async function handleUndoLastEvaluation(recordId?: string) {
   })
 }
 
-// 监听登录弹窗信号
-function checkShowLogin() {
-  if (localStorage.getItem('pet-garden-show-login') === '1') {
-    localStorage.removeItem('pet-garden-show-login')
-    showAuthModal.value = true
-  }
-}
-
-// 监听 storage 事件（Header 触发）
-function handleStorageEvent(e: StorageEvent) {
-  if (e.key === 'pet-garden-show-login') {
-    checkShowLogin()
-  }
-}
-
 onMounted(async () => {
   try {
     await loadClasses()
     await loadRules()
     await loadTags()
     await loadStudents()
-    
-    checkShowLogin()
-    window.addEventListener('storage', handleStorageEvent)
   } finally {
     nextTick(() => { isLoaded.value = true })
   }
 })
 
 onActivated(() => {
-  checkShowLogin()
   loadStudents()
   loadRules()
   loadTags()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('storage', handleStorageEvent)
 })
 </script>
 
@@ -519,7 +497,7 @@ onUnmounted(() => {
     <RecordsModal :show="showRecordsModal" :records="evaluationRecords" :total-records="totalRecords" :page="recordsPage" :total-pages="totalPages" @close="showRecordsModal = false" @undo="handleUndoLastEvaluation" @prev-page="recordsPage--; loadEvaluationRecords()" @next-page="recordsPage++; loadEvaluationRecords()" @go-to-page="recordsPage = $event; loadEvaluationRecords()" />
     <DetailPanel :show="showDetailPanel" :student="detailStudent" :rules="rules" :student-records="studentRecords" @close="closeDetailPanel" @change-pet="showDetailPanel = false; selectedStudent = detailStudent; showPetModal = true" @evaluate="handleDetailEvaluate" />
     <ConfirmDialog :show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :confirm-text="confirmDialog.confirmText" :cancel-text="confirmDialog.cancelText" :type="confirmDialog.type" @confirm="confirmDialog.onConfirm" @cancel="closeConfirm" />
-    <AuthModal :show="showAuthModal" @close="showAuthModal = false" @login="handleLogin($event)" />
+    <AuthModal :show="showLoginModal" @close="closeLoginModal" @login="handleLogin($event)" />
   </PageLayout>
 </template>
 

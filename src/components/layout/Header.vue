@@ -5,6 +5,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useClasses } from '@/composables/useClasses'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import { useLoginModal } from '@/composables/useLoginModal'
 import ClassModal from '@/components/modals/ClassModal.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
@@ -18,6 +19,7 @@ const { logout, isGuest, isAdmin, username } = useAuth()
 const { classes, currentClass, selectClass, loadClasses, createClass: doCreateClass, updateClass: doUpdateClass, deleteClass: doDeleteClass, init } = useClasses()
 const toast = useToast()
 const { confirmDialog, showConfirm, closeConfirm } = useConfirm()
+const { openLoginModal } = useLoginModal()
 
 const showUserMenu = ref(false)
 const showClassSelect = ref(false)
@@ -30,12 +32,10 @@ function isActive(path: string) {
 
 function handleLogin() {
   showUserMenu.value = false
-  localStorage.setItem('pet-garden-show-login', '1')
   if (route.path !== '/') {
     router.push('/')
-  } else {
-    window.dispatchEvent(new StorageEvent('storage', { key: 'pet-garden-show-login', newValue: '1' }))
   }
+  openLoginModal()
 }
 
 function handleLogout() {

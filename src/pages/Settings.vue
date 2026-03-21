@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from 'vue'
 import type { Rule, Class } from '@/types'
 import { useAuth } from '@/composables/useAuth'
-import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -16,7 +15,6 @@ interface Tag {
   created_at: number
 }
 
-const router = useRouter()
 const { api, isGuest, isAdmin, username } = useAuth()
 const toast = useToast()
 const { confirmDialog, showConfirm, closeConfirm } = useConfirm()
@@ -262,7 +260,7 @@ onMounted(async () => {
       :is-admin="isAdmin"
       :username="username"
       :batch-mode="false"
-      @login="router.push('/')"
+      
       
     />
 

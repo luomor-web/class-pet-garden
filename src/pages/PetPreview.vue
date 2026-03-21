@@ -4,10 +4,8 @@ import { PET_TYPES, getPetLevelImage } from '@/data/pets'
 import PetImage from '@/components/PetImage.vue'
 import Header from '@/components/layout/Header.vue'
 import { useAuth } from '@/composables/useAuth'
-import { useRouter } from 'vue-router'
 import type { Class } from '@/types'
 
-const router = useRouter()
 const { api, isGuest, isAdmin, username } = useAuth()
 
 const classes = ref<Class[]>([])
@@ -114,7 +112,7 @@ onActivated(() => {
       :is-admin="isAdmin"
       :username="username"
       :batch-mode="false"
-      @login="router.push('/')"
+      
       
     />
 

@@ -102,7 +102,7 @@ const totalEvals = computed(() => {
       :is-admin="isAdmin"
       :username="username"
       :batch-mode="false"
-      @login="router.push('/')"
+      
       
     />
 

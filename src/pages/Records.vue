@@ -2,13 +2,11 @@
 import { ref, computed, onMounted, onActivated } from 'vue'
 import type { EvaluationRecord, Class } from '@/types'
 import { useAuth } from '@/composables/useAuth'
-import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import Header from '@/components/layout/Header.vue'
 
-const router = useRouter()
 const { api, isGuest, isAdmin, username } = useAuth()
 const toast = useToast()
 const { confirmDialog, showConfirm, closeConfirm } = useConfirm()
@@ -180,7 +178,7 @@ onActivated(() => {
       :is-admin="isAdmin"
       :username="username"
       :batch-mode="false"
-      @login="router.push('/')"
+      
       
     />
 

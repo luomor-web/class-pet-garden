@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import type { Class } from '@/types'
 import { useAuth } from '@/composables/useAuth'
 
@@ -13,16 +13,21 @@ defineProps<{
   batchMode: boolean
 }>()
 
-const emit = defineEmits<{
-  login: []
-}>()
-
 const route = useRoute()
+const router = useRouter()
 const { logout } = useAuth()
 const showUserMenu = ref(false)
 
 function isActive(path: string) {
   return route.path === path
+}
+
+function handleLogin() {
+  showUserMenu.value = false
+  // 如果不在首页，跳转到首页并弹出登录弹窗
+  if (route.path !== '/') {
+    router.push('/?showLogin=1')
+  }
 }
 
 function handleLogout() {
@@ -62,7 +67,7 @@ function handleLogout() {
                 已登录: {{ username }}
               </div>
               <template v-if="isGuest">
-                <button @click="emit('login'); showUserMenu = false" class="w-full text-left px-3 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">
+                <button @click="handleLogin" class="w-full text-left px-3 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">
                   🔑 登录 / 注册
                 </button>
               </template>

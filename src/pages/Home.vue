@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onActivated, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import type { Student, Class, Rule, EvaluationRecord } from '@/types'
 import { useAuth, setGlobalErrorHandler } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
@@ -572,6 +573,14 @@ onMounted(async () => {
     await loadRules()
     await loadTags()
     lastDataVersion.value = getDataVersion()
+    
+    // 检测 URL 参数，自动弹出登录弹窗
+    const route = useRoute()
+    if (route.query.showLogin === '1') {
+      showAuthModal.value = true
+      // 清除 URL 参数
+      window.history.replaceState({}, '', window.location.pathname)
+    }
   } finally {
     isLoading.value = false
     nextTick(() => { isLoaded.value = true })
@@ -618,8 +627,6 @@ onActivated(() => {
       :is-admin="isAdmin"
       :username="username"
       :batch-mode="batchMode"
-      @login="showAuthModal = true"
-      
     />
 
     <!-- Main Content -->

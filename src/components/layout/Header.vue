@@ -175,6 +175,15 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- 游客提示 -->
+    <div v-if="isGuest" class="px-4 py-1.5 bg-amber-500/90 text-white text-sm flex items-center justify-center gap-2">
+      <span>💡</span>
+      <span>当前为游客模式，数据仅保存在本地</span>
+      <button @click="handleLogin" class="ml-2 px-3 py-0.5 bg-white text-amber-600 rounded-full text-xs font-bold hover:bg-amber-50 transition-colors">
+        立即注册
+      </button>
+    </div>
+
     <!-- 第二行：导航 -->
     <div class="px-4 py-2 flex items-center border-t border-white/20 bg-white/10">
       <nav class="flex items-center gap-1">

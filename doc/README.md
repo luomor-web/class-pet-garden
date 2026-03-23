@@ -22,4 +22,5 @@ guest1
 claude
 /init
 CLAUDE.md改写为中文
+修改server/db.js，将dbPath调整为如果在docker中则使用容器路径
 ```

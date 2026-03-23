@@ -21,7 +21,7 @@ pkill -f "vite.*pet-garden" 2>/dev/null
 sleep 1
 
 # 启动后端 API 服务器
-echo "启动后端 API 服务器 (端口 3002)..."
+echo "启动后端 API 服务器 (端口 3000)..."
 nohup node $PROJECT_DIR/server/index.js > $LOG_DIR/server.log 2>&1 &
 SERVER_PID=$!
 echo $SERVER_PID > $PROJECT_DIR/server.pid
@@ -31,7 +31,7 @@ echo "后端服务 PID: $SERVER_PID"
 sleep 2
 
 # 检查后端是否成功启动
-if curl -s http://localhost:3002/api/classes > /dev/null 2>&1; then
+if curl -s http://localhost:3000/api/classes > /dev/null 2>&1; then
     echo "✅ 后端 API 服务启动成功"
 else
     echo "⚠️ 后端 API 服务可能启动失败，请检查日志"
@@ -39,7 +39,7 @@ fi
 
 echo ""
 echo "📋 服务状态:"
-echo "  - 后端 API: http://localhost:3002"
+echo "  - 后端 API: http://localhost:3000"
 echo "  - 日志文件: $LOG_DIR/server.log"
 echo ""
 echo "📝 查看日志: tail -f $LOG_DIR/server.log"

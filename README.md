@@ -37,7 +37,7 @@ npm start
 
 # 或分别启动
 npm run dev      # 前端 :3001
-npm run server   # 后端 :3002
+npm run server   # 后端 :3000
 ```
 
 ### 生产部署
@@ -67,7 +67,7 @@ journalctl -u pet-garden -f
 
 **Nginx 配置要点：**
 - 静态文件：`/var/www/pet-garden/`
-- API 代理：`/pet-garden/api/` → `http://127.0.0.1:3002`
+- API 代理：`/pet-garden/api/` → `http://127.0.0.1:3000`
 - 已启用 gzip 压缩
 - 静态资源缓存 1 年
 

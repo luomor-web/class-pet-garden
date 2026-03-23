@@ -15,7 +15,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/pet-garden/api': {
-        target: 'http://localhost:3002',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/pet-garden/, '')
       }

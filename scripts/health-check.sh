@@ -11,7 +11,7 @@ mkdir -p $PROJECT_DIR/logs
 
 # 检查后端 API 是否响应
 check_api() {
-    curl -s http://localhost:3002/api/classes > /dev/null 2>&1
+    curl -s http://localhost:3000/api/classes > /dev/null 2>&1
     return $?
 }
 

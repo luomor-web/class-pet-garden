@@ -18,7 +18,7 @@ import tagRoutes from './routes/tags.js'
 import adminRoutes from './routes/admin.js'
 
 const app = express()
-const PORT = 3002
+const PORT = 3000
 
 // Middleware
 app.use(cors())

@@ -10,7 +10,7 @@ COPY package*.json ./
 COPY . .
 
 # 安装项目依赖
-RUN npm install
+RUN npm install --registry=https://registry.npmmirror.com/
 
 # 暴露容器端口
 EXPOSE 3000

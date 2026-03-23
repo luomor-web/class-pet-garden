@@ -29,4 +29,13 @@ sudo docker run -d -p 3000:3000 -v $(pwd)/db:/db --name class-pet-garden class-p
 sudo docker logs -f class-pet-garden
 sudo docker stop class-pet-garden
 sudo docker rm class-pet-garden
+
+insert into classes(id,name,user_id) values ('5247d8d6-1a11-4924-9ec4-03c71bd2e313','一五','5247d8d6-1a01-4924-9ec4-03c71bd2e313');
+
+insert into classes(id,name) values ('5247d8d6-1a10-4924-9ec4-03c71bd2e313','test');
+
+e8559d22-c33a-4a05-810c-dd02302ae7b6|guest|26c6d93d816c438b213d8549aa086d4fe098e3b5e392558b6a6804e816d02c03|0|1774234150877|0
+
+update users set is_guest=1,password_hash='' where username='guest';
+update classes set user_id='e8559d22-c33a-4a05-810c-dd02302ae7b6' where name='test';
 ```

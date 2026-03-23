@@ -158,6 +158,10 @@ onMounted(() => {
           </Transition>
         </div>
 
+        <div class="relative">
+          <button @click="openCreateClassModal" class="w-full text-left px-4 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">➕ 新建班级</button>
+        </div>
+
         <!-- User Menu -->
         <div class="relative">
           <button @click="showUserMenu = !showUserMenu" class="w-9 h-9 rounded-full bg-white/95 hover:bg-white shadow-md transition-all flex items-center justify-center overflow-hidden">

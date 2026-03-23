@@ -18,4 +18,8 @@ huohua
 
 guest
 guest1
+
+claude
+/init
+CLAUDE.md改写为中文
 ```

@@ -1,11 +1,13 @@
 # 使用官方 Node.js 镜像作为基础镜像
-FROM node:22
+FROM docker.1ms.run/node:22
 
 # 设置工作目录
 WORKDIR /app
 
 # 复制 package.json 和 package-lock.json
 COPY package*.json ./
+
+COPY . .
 
 # 安装项目依赖
 RUN npm install

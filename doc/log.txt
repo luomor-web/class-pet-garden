@@ -1,0 +1,11 @@
+class-pet-garden/server/node_modules/better-sqlite3/lib/methods/wrappers.js:5
+[1] 	return this[cppdb].prepare(sql, this, false);
+[1] 	                   ^
+[1] SqliteError: no such table: settings
+[1]     at Database.prepare (/class-pet-garden/server/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+[1]     at file:///class-pet-garden/server/index.js:66:24
+[1]     at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+[1]     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+[1]     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:116:5) {
+[1]   code: 'SQLITE_ERROR'
+[1] }

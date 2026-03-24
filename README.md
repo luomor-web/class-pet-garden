@@ -24,7 +24,7 @@
 ## 🚀 快速开始
 
 ### 在线演示
-https://8.147.56.12/pet-garden/
+https://8.147.56.12/
 
 ### 本地开发
 
@@ -66,8 +66,8 @@ journalctl -u pet-garden -f
 ```
 
 **Nginx 配置要点：**
-- 静态文件：`/var/www/pet-garden/`
-- API 代理：`/pet-garden/api/` → `http://127.0.0.1:3000`
+- 静态文件：`/var/www/`
+- API 代理：`/api/` → `http://127.0.0.1:3000`
 - 已启用 gzip 压缩
 - 静态资源缓存 1 年
 
@@ -118,7 +118,7 @@ journalctl -u pet-garden -f
 │              ↓ REST API                      │
 │  Node.js + Express + better-sqlite3         │
 │              ↓                               │
-│         SQLite (pet-garden.db)              │
+│         SQLite (luomor-pet.db)              │
 └─────────────────────────────────────────────┘
 ```
 

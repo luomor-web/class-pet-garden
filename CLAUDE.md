@@ -84,7 +84,7 @@ class-pet-garden/
 
 **路径别名**: `@/` 在 Vite 和 Vitest 配置中均解析为 `src/`。
 
-**API 代理**: Vite 代理 `/pet-garden/api` → `http://localhost:3000/api`
+**API 代理**: Vite 代理 `/api` → `http://localhost:3000/api`
 
 **后端结构**: Express 模块路由，每个路由文件处理一个领域（班级、学生、评价）。使用 `better-sqlite3` 进行同步数据库操作。
 
@@ -97,7 +97,7 @@ class-pet-garden/
 
 ### 数据库结构
 
-单个 SQLite 文件 (`server/pet-garden.db`)，包含表：
+单个 SQLite 文件 (`server/luomor-pet.db`)，包含表：
 - `users` - 教师账号（游客 + 管理员）
 - `classes` - 班级
 - `students` - 学生记录（含宠物分配）

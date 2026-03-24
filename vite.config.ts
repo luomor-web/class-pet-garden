@@ -4,7 +4,7 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
-  base: '/pet-garden/',
+  base: '/',
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
@@ -14,10 +14,10 @@ export default defineConfig({
     port: 3001,
     host: true,
     proxy: {
-      '/pet-garden/api': {
+      '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pet-garden/, '')
+        rewrite: (path) => path.replace(/^\/, '')
       }
     },
     // 静态资源缓存配置

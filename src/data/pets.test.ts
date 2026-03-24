@@ -143,7 +143,7 @@ describe('getPetType', () => {
 describe('getPetLevelImage', () => {
   it('应该返回正确等级的图片路径', () => {
     const image = getPetLevelImage('corgi', 1)
-    expect(image).toBe('/pet-garden/pets/corgi/lv1.png')
+    expect(image).toBe('/pets/corgi/lv1.png')
   })
 
   it('等级超出范围应该返回边界值图片', () => {

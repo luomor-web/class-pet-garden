@@ -10,7 +10,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const db = new Database(join(__dirname, '../pet-garden.db'));
+const db = new Database(join(__dirname, '../luomor-pet.db'));
 
 // 查询所有用户（包括游客）
 const users = db.prepare(`

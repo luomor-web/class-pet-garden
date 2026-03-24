@@ -6,7 +6,7 @@
 PROJECT_DIR="/root/.openclaw/workspace/projects/class-pet-garden"
 SERVER_HOST="8.147.56.12"
 SERVER_USER="root"
-SERVER_PATH="/var/www/html/pet-garden"
+SERVER_PATH="/var/www/html"
 
 echo "🚀 开始部署班级宠物花园..."
 
@@ -30,4 +30,4 @@ echo "🔧 设置文件权限..."
 ssh $SERVER_USER@$SERVER_HOST "chown -R www-data:www-data $SERVER_PATH && chmod -R 755 $SERVER_PATH"
 
 echo "✅ 部署完成！"
-echo "🌐 访问地址: https://$SERVER_HOST/pet-garden/"
+echo "🌐 访问地址: https://$SERVER_HOST/"

@@ -51,7 +51,7 @@ class-pet-garden/
 │   └── utils/               # 工具函数（当前为空）
 ├── server/
 │   ├── index.js             # Express API + SQLite 结构
-│   └── pet-garden.db        # SQLite 数据库文件
+│   └── luomor-pet.db        # SQLite 数据库文件
 ├── public/images/pets/      # 宠物图片（normal/ & mythical/）
 ├── vite.config.ts           # Vite 配置
 ├── tsconfig.json            # TypeScript 配置（严格模式）
@@ -141,7 +141,7 @@ onMounted(() => { ... })
 ```typescript
 // 创建 axios 实例并设置 baseURL
 const api = axios.create({
-  baseURL: '/pet-garden/api'
+  baseURL: '/api'
 })
 
 // 异步/等待模式
@@ -214,7 +214,7 @@ app.get('/api/classes', (req, res) => {
 - 积分贡献给宠物经验值
 
 **数据持久化：**
-- SQLite 数据库位于 `server/pet-garden.db`
+- SQLite 数据库位于 `server/luomor-pet.db`
 - 所有数据在单个 `.db` 文件中（易于备份/恢复）
 
 ---
@@ -224,5 +224,5 @@ app.get('/api/classes', (req, res) => {
 1. **注释使用中文** - 保持风格一致
 2. **当前无测试** - 使用 `npm run dev` + `npm run server` 手动验证
 3. **同时运行两个服务器** 以获得完整功能：`npm run start`
-4. **代理配置** 在 Vite 中：`/pet-garden/api` → `http://localhost:3000`
+4. **代理配置** 在 Vite 中：`/api` → `http://localhost:3000`
 5. **构建前类型检查**：`vue-tsc` 随 `npm run build` 自动运行

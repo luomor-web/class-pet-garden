@@ -8,7 +8,7 @@ const __dirname = dirname(__filename)
 
 // 支持测试模式使用内存数据库
 const isDocker = fs.existsSync('/.dockerenv')
-const dbPath = process.env.TEST_DB ? ':memory:' : (isDocker ? '/db/pet-garden.db' : join(__dirname, 'pet-garden.db'))
+const dbPath = process.env.TEST_DB ? ':memory:' : (isDocker ? '/db/luomor-pet.db' : join(__dirname, 'luomor-pet.db'))
 export const db = new Database(dbPath)
 
 // 初始化数据库表

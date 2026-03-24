@@ -8,7 +8,7 @@ import Students from '@/pages/Students.vue'
 import Admin from '@/pages/Admin.vue'
 
 const router = createRouter({
-  history: createWebHistory('/pet-garden/'),
+  history: createWebHistory('/'),
   routes: [
     { path: '/', name: 'home', component: Home },
     { path: '/preview', name: 'preview', component: PetPreview },

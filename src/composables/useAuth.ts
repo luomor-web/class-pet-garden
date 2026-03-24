@@ -21,7 +21,7 @@ const token = ref<string>(localStorage.getItem('token') || '')
 
 // 创建带认证的 axios 实例（单例）
 const api = axios.create({
-  baseURL: '/pet-garden/api'
+  baseURL: '/api'
 })
 
 // 请求拦截器：自动添加 Authorization header

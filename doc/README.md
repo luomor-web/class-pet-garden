@@ -6,10 +6,10 @@ cd server
 npm install
 npm install --registry=https://registry.npmmirror.com/
 node db.js
-mv pet-garden.db.bak pet-garden.db
+mv luomor-pet.db.bak luomor-pet.db
 
 npm start
-http://localhost:3001/pet-garden/
+http://localhost:3001/
 admin
 Claw2026!
 

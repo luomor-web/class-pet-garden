@@ -34,7 +34,7 @@ app.use(cors())
 app.use(express.json())
 
 // Database - 使用绝对路径
-const dbPath = join(__dirname, 'pet-garden.db')
+const dbPath = join(__dirname, 'luomor-pet.db')
 const db = new Database(dbPath)
 
 // Create tables

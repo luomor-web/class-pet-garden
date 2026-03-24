@@ -17,7 +17,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/, '')
+        rewrite: (path) => path.replace(/^\//, '')
       }
     },
     // 静态资源缓存配置

@@ -26,6 +26,7 @@ CLAUDE.md改写为中文
 
 sudo docker build -t class-pet-garden -f docker/Dockerfile ./server
 sudo docker run -d -p 3000:3000 -v $(pwd)/db:/db --name class-pet-garden class-pet-garden
+sudo docker run -d -p 8090:3000 -v $(pwd)/db:/db --name class-pet-garden class-pet-garden
 sudo docker logs -f class-pet-garden
 sudo docker stop class-pet-garden
 sudo docker rm class-pet-garden
@@ -38,4 +39,6 @@ e8559d22-c33a-4a05-810c-dd02302ae7b6|guest|26c6d93d816c438b213d8549aa086d4fe098e
 
 update users set is_guest=1,password_hash='' where username='guest';
 update classes set user_id='e8559d22-c33a-4a05-810c-dd02302ae7b6' where name='test';
+
+sudo docker rmi `docker images | grep none | awk '{print $3}'`
 ```

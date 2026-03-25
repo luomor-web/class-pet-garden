@@ -27,13 +27,13 @@ onActivated(() => {
   >
     <Header />
 
+    <Footer />
+
     <main 
       class="flex-1" 
       :class="[noPadding ? '' : 'p-6', contentClass]"
     >
       <slot />
     </main>
-
-    <Footer />
   </div>
 </template>

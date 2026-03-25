@@ -2,6 +2,7 @@
 import { onActivated } from 'vue'
 import { useClasses } from '@/composables/useClasses'
 import Header from './Header.vue'
+import Footer from './Footer.vue'
 
 defineProps<{
   contentClass?: string
@@ -33,11 +34,6 @@ onActivated(() => {
       <slot />
     </main>
 
-    <div>
-        <!-- 底部版权信息 -->
-        <footer class="text-center text-sm text-gray-500 py-4">
-          © 2026 班级宠物园 | <a href="https://www.luomor.com/" class="text-blue-500 hover:underline">烙馍网</a>
-        </footer>
-    </div>
+    <Footer />
   </div>
 </template>

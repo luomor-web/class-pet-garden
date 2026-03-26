@@ -7,6 +7,7 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { useLoginModal } from '@/composables/useLoginModal'
 import ClassModal from '@/components/modals/ClassModal.vue'
+import RewardModal from '@/components/modals/RewardModal.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 defineProps<{
@@ -24,6 +25,7 @@ const { openLoginModal } = useLoginModal()
 const showUserMenu = ref(false)
 const showClassSelect = ref(false)
 const showClassModal = ref(false)
+const showRewardModal = ref(false)
 const editingClass = ref<any>(null)
 
 function isActive(path: string) {
@@ -53,6 +55,10 @@ function openCreateClassModal() {
   editingClass.value = null
   showClassSelect.value = false
   showClassModal.value = true
+}
+
+function openRewardModal() {
+  showRewardModal.value = true
 }
 
 function openEditClassModal() {
@@ -161,6 +167,9 @@ onMounted(() => {
         <div class="relative">
           <button @click="openCreateClassModal" class="w-full text-left px-4 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">➕ 新建班级</button>
         </div>
+        <div class="relative">
+          <button @click="openRewardModal" class="w-full text-left px-4 py-2 text-sm hover:bg-gradient-to-r hover:from-orange-50 hover:to-pink-50 transition-colors">🏫 打赏</button>
+        </div>
 
         <!-- User Menu -->
         <div class="relative">
@@ -202,6 +211,7 @@ onMounted(() => {
   </header>
 
   <ClassModal :show="showClassModal" :editing="editingClass" @close="showClassModal = false; editingClass = null" @submit="handleClassSubmit" />
+  <RewardModal :show="showRewardModal" @close="showRewardModal = false" />
   <ConfirmDialog :show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :confirm-text="confirmDialog.confirmText" :cancel-text="confirmDialog.cancelText" :type="confirmDialog.type" @confirm="confirmDialog.onConfirm" @cancel="closeConfirm" />
 </template>
 

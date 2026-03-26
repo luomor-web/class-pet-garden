@@ -111,7 +111,7 @@ onMounted(() => {
       <!-- Left: Logo -->
       <router-link to="/" class="text-xl font-bold text-white drop-shadow-lg flex items-center gap-2 hover:opacity-90 transition-opacity">
         <span class="text-2xl animate-bounce-slow">🐾</span>
-        <span class="text-gradient">徐州班级宠物园</span>
+        <span class="text-gradient">星光班级宠物园</span>
       </router-link>
 
       <!-- Right: 游客提示 + 班级选择 + 用户 -->

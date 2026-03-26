@@ -25,6 +25,7 @@ import PageLayout from '@/components/layout/PageLayout.vue'
 import EvaluationModal from '@/components/modals/EvaluationModal.vue'
 import PetModal from '@/components/modals/PetModal.vue'
 import PetStatusModal from '@/components/PetStatusModal.vue'
+import ClassModal from '@/components/modals/ClassModal.vue'
 
 // Auth & Toast
 const { api } = useAuth()
@@ -34,7 +35,7 @@ const { showLevelUpAnimation, levelUpInfo, levelUpPhase, triggerLevelUp } = useL
 const { triggerAnimation: triggerPetStatusAnimation } = usePetStatusAnimation()
 
 // 使用全局状态
-const { classes, currentClass, loadClasses } = useClasses()
+const { classes, currentClass, loadClasses, createClass } = useClasses()
 const { students, loadStudents, changePet, batchEvaluate, addEvaluation } = useStudents()
 const { allTags, loadTags, getStudentTags } = useTags()
 const { showLoginModal, closeLoginModal } = useLoginModal()
@@ -54,6 +55,7 @@ const isLoaded = ref(false)
 // Modal states
 const showEvalModal = ref(false)
 const showPetModal = ref(false)
+const showClassModal = ref(false)
 const showDetailPanel = ref(false)
 const selectedStudent = ref<Student | null>(null)
 const detailStudent = ref<Student | null>(null)
@@ -206,6 +208,21 @@ async function handleDetailEvaluate(rule: Rule) {
   const res = await doEvaluate(detailStudent.value, rule)
   if (res) {
     closeDetailPanel()
+  }
+}
+
+// 创建班级
+async function handleCreateClass(name: string) {
+  if (!name.trim()) {
+    toast.warning('请输入班级名称')
+    return
+  }
+  try {
+    await createClass(name.trim())
+    toast.success('班级创建成功！')
+    showClassModal.value = false
+  } catch (error) {
+    toast.error('创建班级失败')
   }
 }
 
@@ -372,7 +389,10 @@ onActivated(() => {
         <div v-if="classes.length === 0" key="no-class" class="flex flex-col items-center justify-center min-h-[60vh]">
           <div class="text-8xl mb-6 animate-float">🏫</div>
           <h3 class="text-2xl font-bold text-gray-700 mb-3">还没有班级</h3>
-          <p class="text-gray-500 mb-6 text-lg">在顶部导航栏创建一个班级，开启你的宠物园之旅吧！</p>
+          <p class="text-gray-500 mb-6 text-lg">创建一个班级，开启你的宠物园之旅吧！</p>
+          <button @click="showClassModal = true" class="bg-gradient-to-r from-orange-400 to-pink-500 text-white px-6 py-3 rounded-2xl hover:shadow-lg hover:scale-105 transition-all font-bold">
+            ➕ 创建班级
+          </button>
         </div>
 
         <!-- 无学生状态 -->
@@ -413,6 +433,7 @@ onActivated(() => {
     <DetailPanel :show="showDetailPanel" :student="detailStudent" :rules="rules" :student-records="studentRecords" @close="closeDetailPanel" @change-pet="showDetailPanel = false; selectedStudent = detailStudent; showPetModal = true" @evaluate="handleDetailEvaluate" />
     <ConfirmDialog :show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :confirm-text="confirmDialog.confirmText" :cancel-text="confirmDialog.cancelText" :type="confirmDialog.type" @confirm="confirmDialog.onConfirm" @cancel="closeConfirm" />
     <AuthModal :show="showLoginModal" @close="closeLoginModal" @login="handleLogin($event)" />
+    <ClassModal :show="showClassModal" @close="showClassModal = false" @submit="handleCreateClass" />
   </PageLayout>
 </template>
 

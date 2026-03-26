@@ -29,8 +29,16 @@ function close() {
         </h3>
         <p class="text-gray-600 mb-6">感谢您的支持！您的打赏将帮助我们继续改进和维护星光班级宠物园。</p>
         <div class="flex gap-3 mb-6">
-          <img style="width: 200px" src="https://www.luomor.com/wp-content/uploads/2025/05/alipay.jpeg" />
-          <img style="width: 200px" src="https://www.luomor.com/wp-content/uploads/2023/04/WX20230418-182420@2x.png" />
+          <table>
+            <tr>
+              <td class="px-4 py-2 border">支付宝</td>
+              <td class="px-4 py-2 border">微信</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-2 border"><img style="max-width: 150px" src="https://www.luomor.com/wp-content/uploads/2025/05/alipay.jpeg" /></td>
+              <td class="px-4 py-2 border"><img style="max-width: 150px" src="https://www.luomor.com/wp-content/uploads/2023/04/WX20230418-182420@2x.png" /></td>
+            </tr>
+          </table>
         </div>
         <div class="flex gap-3 justify-end">
           <button @click="close" class="bg-gradient-to-r from-orange-400 to-pink-500 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition-all">已打赏</button>

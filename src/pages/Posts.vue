@@ -100,7 +100,7 @@ function formatDate(timestamp: number) {
 }
 
 function showAuthorName(authorName: string, isAdmin: boolean): string {
-  return isAdmin ? '作者' : authorName
+  return isAdmin ? '星光创始人' : authorName
 }
 
 function openCreateModal() {

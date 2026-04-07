@@ -35,15 +35,5 @@ onActivated(() => {
     </main>
 
     <Footer />
-    <footer class="py-3 text-center text-xs text-gray-400">
-      <a 
-        href="https://beian.miit.gov.cn/" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        class="hover:text-gray-500 transition-colors"
-      >
-        苏ICP备2026016754号
-      </a>
-    </footer>
   </div>
 </template>

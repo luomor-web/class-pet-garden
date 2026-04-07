@@ -114,11 +114,77 @@ router.put('/:id/pet', authMiddleware, (req, res) => {
       .run(badgeId, req.params.id, student.pet_type, now)
   }
 
-  // Update pet type and reset level/exp
-  db.prepare('UPDATE students SET pet_type = ?, pet_level = 1, pet_exp = 0 WHERE id = ?')
+  // Update pet type (keep level and exp)
+  db.prepare('UPDATE students SET pet_type = ? WHERE id = ?')
     .run(petType, req.params.id)
 
   res.json({ success: true })
+})
+
+// 转班
+router.put('/:id/transfer', authMiddleware, (req, res) => {
+  const { targetClassId } = req.body
+
+  if (!targetClassId) {
+    return res.status(400).json({ error: '请选择目标班级' })
+  }
+
+  // 验证学生归属
+  const student = verifyStudentOwnership(req.params.id, req.userId)
+  if (!student) {
+    return res.status(404).json({ error: '学生不存在或无权访问' })
+  }
+
+  // 验证目标班级归属
+  const targetClass = verifyClassOwnership(targetClassId, req.userId)
+  if (!targetClass) {
+    return res.status(403).json({ error: '目标班级不存在或无权访问' })
+  }
+
+  // 不能转到同一个班
+  if (student.class_id === targetClassId) {
+    return res.status(400).json({ error: '学生已在该班级中' })
+  }
+
+  // 更新学生的班级
+  db.prepare('UPDATE students SET class_id = ? WHERE id = ?').run(targetClassId, req.params.id)
+
+  // 同时更新该学生的评价记录的班级归属
+  db.prepare('UPDATE evaluation_records SET class_id = ? WHERE student_id = ?').run(targetClassId, req.params.id)
+
+  res.json({ success: true })
+})
+
+// 批量转班
+router.post('/batch-transfer', authMiddleware, (req, res) => {
+  const { ids, targetClassId } = req.body
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: '请选择要转班的学生' })
+  }
+
+  if (!targetClassId) {
+    return res.status(400).json({ error: '请选择目标班级' })
+  }
+
+  // 验证学生归属
+  const { valid } = verifyStudentsOwnership(ids, req.userId)
+  if (!valid) {
+    return res.status(403).json({ error: '部分学生不存在或无权访问' })
+  }
+
+  // 验证目标班级归属
+  const targetClass = verifyClassOwnership(targetClassId, req.userId)
+  if (!targetClass) {
+    return res.status(403).json({ error: '目标班级不存在或无权访问' })
+  }
+
+  // 批量更新
+  const placeholders = ids.map(() => '?').join(',')
+  db.prepare(`UPDATE students SET class_id = ? WHERE id IN (${placeholders})`).run(targetClassId, ...ids)
+  db.prepare(`UPDATE evaluation_records SET class_id = ? WHERE student_id IN (${placeholders})`).run(targetClassId, ...ids)
+
+  res.json({ success: true, transferred: ids.length })
 })
 
 export default router

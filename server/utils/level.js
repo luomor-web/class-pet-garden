@@ -1,5 +1,5 @@
 // 等级配置 (每级所需经验)
-export const LEVEL_CONFIG = [40, 60, 80, 100, 120, 140, 160]
+export const LEVEL_CONFIG = [20, 30, 40, 50, 60, 70, 80]
 
 // 计算等级
 export function calculateLevel(exp) {

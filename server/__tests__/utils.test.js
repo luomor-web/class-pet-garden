@@ -8,15 +8,15 @@ describe('Level Utils', () => {
     })
 
     it('should return 1 for exp less than first threshold', () => {
-      expect(calculateLevel(39)).toBe(1)
+      expect(calculateLevel(19)).toBe(1)
     })
 
     it('should return 2 when exp reaches first threshold', () => {
-      expect(calculateLevel(40)).toBe(2)
+      expect(calculateLevel(20)).toBe(2)
     })
 
-    it('should return 3 for 100 exp', () => {
-      expect(calculateLevel(100)).toBe(3)
+    it('should return 3 for 50 exp', () => {
+      expect(calculateLevel(50)).toBe(3)
     })
 
     it('should return 8 (max) for high exp', () => {
@@ -26,19 +26,19 @@ describe('Level Utils', () => {
 
   describe('getLevelProgress', () => {
     it('should return correct progress for level 1', () => {
-      const progress = getLevelProgress(20)
+      const progress = getLevelProgress(10)
       expect(progress.level).toBe(1)
-      expect(progress.current).toBe(20)
-      expect(progress.required).toBe(40)
+      expect(progress.current).toBe(10)
+      expect(progress.required).toBe(20)
       expect(progress.percentage).toBe(50)
       expect(progress.isMaxLevel).toBe(false)
     })
 
     it('should return correct progress for level 2', () => {
-      const progress = getLevelProgress(60)
+      const progress = getLevelProgress(35)
       expect(progress.level).toBe(2)
-      expect(progress.current).toBe(20)
-      expect(progress.required).toBe(60)
+      expect(progress.current).toBe(15)
+      expect(progress.required).toBe(30)
     })
 
     it('should show max level for level 8', () => {

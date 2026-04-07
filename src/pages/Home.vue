@@ -16,6 +16,7 @@ import { matchByPinyin } from '@/utils/pinyin'
 // Components
 import LoadingScreen from '@/components/LoadingScreen.vue'
 import LevelUpModal from '@/components/LevelUpModal.vue'
+import ReviveModal from '@/components/ReviveModal.vue'
 import StudentCard from '@/components/StudentCard.vue'
 import BatchActionBar from '@/components/BatchActionBar.vue'
 import DetailPanel from '@/components/DetailPanel.vue'
@@ -33,6 +34,10 @@ const toast = useToast()
 const { confirmDialog, showConfirm, closeConfirm } = useConfirm()
 const { showLevelUpAnimation, levelUpInfo, levelUpPhase, triggerLevelUp } = useLevelUp()
 const { triggerAnimation: triggerPetStatusAnimation } = usePetStatusAnimation()
+
+// 复活动画状态
+const showReviveModal = ref(false)
+const reviveInfo = ref<{ name: string; petType: string; petLevel: number } | null>(null)
 
 // 使用全局状态
 const { classes, currentClass, loadClasses, createClass } = useClasses()
@@ -211,6 +216,27 @@ async function handleDetailEvaluate(rule: Rule) {
   }
 }
 
+// 复活成功后刷新数据并显示动画
+async function handleRevived() {
+  if (!detailStudent.value) return
+  
+  // 保存复活信息
+  reviveInfo.value = {
+    name: detailStudent.value.name,
+    petType: detailStudent.value.pet_type!,
+    petLevel: detailStudent.value.pet_level
+  }
+  
+  await loadStudents()
+  closeDetailPanel()
+  
+  // 显示复活动画
+  showReviveModal.value = true
+  setTimeout(() => {
+    showReviveModal.value = false
+  }, 3000)
+}
+
 // 创建班级
 async function handleCreateClass(name: string) {
   if (!name.trim()) {
@@ -317,6 +343,14 @@ onActivated(() => {
       :pet-type="levelUpInfo.petType"
       :prev-level="levelUpInfo.prevLevel"
       :phase="levelUpPhase"
+    />
+
+    <!-- Revive Modal -->
+    <ReviveModal
+      :show="showReviveModal"
+      :name="reviveInfo?.name || ''"
+      :pet-type="reviveInfo?.petType || ''"
+      :pet-level="reviveInfo?.petLevel || 1"
     />
 
     <!-- Pet Status Modal -->
@@ -430,7 +464,7 @@ onActivated(() => {
     <!-- Modals -->
     <EvaluationModal :show="showEvalModal" :selected-count="selectedStudents.size" :rules="rules" @close="showEvalModal = false" @evaluate="handleEvaluate" />
     <PetModal :show="showPetModal" :student="selectedStudent" @close="showPetModal = false; selectedStudent = null" @select="selectPet" />
-    <DetailPanel :show="showDetailPanel" :student="detailStudent" :rules="rules" :student-records="studentRecords" @close="closeDetailPanel" @change-pet="showDetailPanel = false; selectedStudent = detailStudent; showPetModal = true" @evaluate="handleDetailEvaluate" />
+    <DetailPanel :show="showDetailPanel" :student="detailStudent" :rules="rules" :student-records="studentRecords" @close="closeDetailPanel" @change-pet="showDetailPanel = false; selectedStudent = detailStudent; showPetModal = true" @evaluate="handleDetailEvaluate" @revived="handleRevived" />
     <ConfirmDialog :show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :confirm-text="confirmDialog.confirmText" :cancel-text="confirmDialog.cancelText" :type="confirmDialog.type" @confirm="confirmDialog.onConfirm" @cancel="closeConfirm" />
     <AuthModal :show="showLoginModal" @close="closeLoginModal" @login="handleLogin($event)" />
     <ClassModal :show="showClassModal" @close="showClassModal = false" @submit="handleCreateClass" />

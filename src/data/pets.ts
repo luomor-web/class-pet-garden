@@ -57,7 +57,7 @@ export const PET_TYPES: PetType[] = [
 ]
 
 // 等级配置
-export const LEVEL_CONFIG = [40, 60, 80, 100, 120, 140, 160]
+export const LEVEL_CONFIG = [20, 30, 40, 50, 60, 70, 80]
 
 // 获取宠物信息
 export function getPetType(id: string): PetType | undefined {

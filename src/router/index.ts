@@ -6,6 +6,7 @@ import Settings from '@/pages/Settings.vue'
 import Records from '@/pages/Records.vue'
 import Students from '@/pages/Students.vue'
 import Admin from '@/pages/Admin.vue'
+import Posts from '@/pages/Posts.vue'
 
 const router = createRouter({
   history: createWebHistory('/'),
@@ -16,7 +17,8 @@ const router = createRouter({
     { path: '/settings', name: 'settings', component: Settings },
     { path: '/records', name: 'records', component: Records },
     { path: '/students', name: 'students', component: Students },
-    { path: '/admin', name: 'admin', component: Admin }
+    { path: '/admin', name: 'admin', component: Admin },
+    { path: '/posts', name: 'posts', component: Posts }
   ]
 })
 

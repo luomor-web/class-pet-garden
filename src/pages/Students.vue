@@ -14,7 +14,7 @@ import { getPetLevelImage } from '@/data/pets'
 import ClassModal from '@/components/modals/ClassModal.vue'
 
 const { classes, currentClass, createClass } = useClasses()
-const { students, isLoading, loadStudents, addStudent: doAddStudent, updateStudent, deleteStudent: doDeleteStudent, batchDeleteStudents, importStudents: doImportStudents } = useStudents()
+const { students, isLoading, loadStudents, addStudent: doAddStudent, updateStudent, deleteStudent: doDeleteStudent, batchDeleteStudents, importStudents: doImportStudents, transferStudent, batchTransferStudents } = useStudents()
 const { allTags, loadTags, loadStudentTags, addTagsToStudents, removeTagsFromStudents, getStudentTags, isTagAppliedToStudents } = useTags()
 const toast = useToast()
 const { confirmDialog, showConfirm, closeConfirm } = useConfirm()
@@ -52,6 +52,10 @@ const importText = ref('')
 
 const showTagModal = ref(false)
 const taggingStudent = ref<Student | null>(null)
+
+const showTransferModal = ref(false)
+const transferStudentData = ref<Student | null>(null)
+const targetClassId = ref('')
 
 function getPetImage(student: Student): string {
   if (!student.pet_type) return ''
@@ -186,6 +190,40 @@ async function handleCreateClass(name: string) {
   }
 }
 
+// 转班
+function openTransferModal(student: Student | null) {
+  transferStudentData.value = student
+  targetClassId.value = ''
+  showTransferModal.value = true
+}
+
+async function handleTransfer() {
+  if (!targetClassId.value) {
+    toast.warning('请选择目标班级')
+    return
+  }
+
+  const studentIds = transferStudentData.value
+    ? [transferStudentData.value.id]
+    : Array.from(selectedIds.value)
+
+  if (studentIds.length === 0) return
+
+  try {
+    if (transferStudentData.value) {
+      await transferStudent(transferStudentData.value.id, targetClassId.value)
+      toast.success(`${transferStudentData.value.name} 已转班成功`)
+    } else {
+      await batchTransferStudents(studentIds, targetClassId.value)
+      toast.success(`已为 ${studentIds.length} 名学生转班`)
+      selectedIds.value.clear()
+    }
+    showTransferModal.value = false
+  } catch (error: any) {
+    toast.error(error.response?.data?.error || '转班失败')
+  }
+}
+
 onMounted(async () => {
   await loadTags()
   if (currentClass.value) {
@@ -224,6 +262,7 @@ onActivated(() => {
             </div>
             <div class="flex items-center gap-2 flex-wrap justify-end">
               <template v-if="selectedIds.size > 0">
+                <button @click="openTransferModal(null)" class="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 border border-blue-200 rounded-xl font-medium transition-colors">🔄 转班 ({{ selectedIds.size }})</button>
                 <button @click="openTagModal(null)" class="px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 border border-orange-200 rounded-xl font-medium transition-colors">🏷️ 管理标签 ({{ selectedIds.size }})</button>
                 <button @click="handleDeleteSelected" class="px-4 py-2 text-sm text-red-500 hover:bg-red-50 border border-red-200 rounded-xl font-medium transition-colors">🗑️ 删除 ({{ selectedIds.size }})</button>
               </template>
@@ -256,7 +295,7 @@ onActivated(() => {
                 <div class="col-span-2 text-sm text-gray-500">{{ student.student_no || '-' }}</div>
                 <div class="col-span-3"><div class="flex flex-wrap gap-1"><span v-for="tag in getStudentTags(student.id)" :key="tag.id" class="px-2 py-0.5 rounded-full text-xs text-white font-medium" :style="{ backgroundColor: tag.color }">{{ tag.name }}</span><button @click="openTagModal(student)" class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">+</button></div></div>
                 <div class="col-span-1 text-sm font-medium text-orange-500 text-center">{{ student.total_points }}</div>
-                <div class="col-span-2 text-right"><button @click="openTagModal(student)" class="text-green-500 hover:text-green-600 text-sm px-2">标签</button><button @click="startEdit(student)" class="text-blue-500 hover:text-blue-600 text-sm px-2">编辑</button><button @click="handleDeleteStudent(student.id)" class="text-red-400 hover:text-red-600 text-sm px-2">删除</button></div>
+                <div class="col-span-2 text-right"><button @click="openTransferModal(student)" class="text-purple-500 hover:text-purple-600 text-sm px-2">转班</button><button @click="openTagModal(student)" class="text-green-500 hover:text-green-600 text-sm px-2">标签</button><button @click="startEdit(student)" class="text-blue-500 hover:text-blue-600 text-sm px-2">编辑</button><button @click="handleDeleteStudent(student.id)" class="text-red-400 hover:text-red-600 text-sm px-2">删除</button></div>
               </template>
             </div>
           </div>
@@ -267,6 +306,25 @@ onActivated(() => {
     <Transition name="modal"><div v-if="showTagModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showTagModal = false"><div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"><h3 class="text-lg font-bold mb-1">🏷️ 管理标签</h3><p class="text-sm text-gray-500 mb-4">{{ taggingStudent ? `为 ${taggingStudent.name}` : `为选中的 ${selectedIds.size} 名学生` }}管理标签</p><div v-if="allTags.length === 0" class="text-center py-6 text-gray-500"><p>暂无标签</p><router-link to="/settings" class="text-orange-500 hover:text-orange-600 text-sm mt-2 inline-block">去创建标签 →</router-link></div><div v-else class="flex flex-wrap gap-2"><button v-for="tag in allTags" :key="tag.id" @click="toggleTag(tag)" class="px-4 py-2 rounded-full text-sm font-medium transition-all" :class="isTagApplied(tag) ? 'ring-2 ring-offset-2 ring-gray-400 scale-105' : 'opacity-70 hover:opacity-100 hover:scale-105'" :style="{ backgroundColor: tag.color, color: 'white' }">{{ tag.name }}<span v-if="isTagApplied(tag)" class="ml-1">✓</span></button></div><div class="flex justify-end gap-2 mt-6"><button @click="showTagModal = false" class="px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-orange-600 transition-all">完成</button></div></div></div></Transition>
     <ConfirmDialog :show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :confirm-text="confirmDialog.confirmText" :cancel-text="confirmDialog.cancelText" :type="confirmDialog.type" @confirm="confirmDialog.onConfirm" @cancel="closeConfirm" />
     <ClassModal :show="showClassModal" @close="showClassModal = false" @submit="handleCreateClass" />
+    <Transition name="modal">
+      <div v-if="showTransferModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showTransferModal = false">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <h3 class="text-lg font-bold mb-1">🔄 转班</h3>
+          <p class="text-sm text-gray-500 mb-4">{{ transferStudentData ? `将 ${transferStudentData.name} 转到` : `将选中的 ${selectedIds.size} 名学生转到` }}</p>
+          <div class="space-y-2">
+            <label class="block text-sm text-gray-500">目标班级</label>
+            <select v-model="targetClassId" class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-orange-400">
+              <option value="">请选择班级</option>
+              <option v-for="cls in classes.filter(c => c.id !== currentClass?.id)" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-2 mt-6">
+            <button @click="showTransferModal = false" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded-xl text-sm font-medium transition-colors">取消</button>
+            <button @click="handleTransfer" class="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-500 text-white rounded-xl text-sm font-medium shadow-sm">确认转班</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </PageLayout>
 </template>
 

@@ -86,6 +86,20 @@ export function useStudents() {
     return res.data
   }
 
+  // ---------- 转班 ----------
+  async function transferStudent(studentId: string, targetClassId: string) {
+    const res = await api.put(`/students/${studentId}/transfer`, { targetClassId })
+    await loadStudents()
+    return res.data
+  }
+
+  async function batchTransferStudents(studentIds: string[], targetClassId: string) {
+    if (studentIds.length === 0) return
+    const res = await api.post('/students/batch-transfer', { ids: studentIds, targetClassId })
+    await loadStudents()
+    return res.data
+  }
+
   // ---------- 评价操作 ----------
   async function addEvaluation(studentId: string, rule: { points: number; name: string; category?: string }) {
     if (!currentClass.value) return
@@ -160,6 +174,10 @@ export function useStudents() {
     
     // 宠物
     changePet,
+    
+    // 转班
+    transferStudent,
+    batchTransferStudents,
     
     // 评价
     addEvaluation,

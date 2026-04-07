@@ -2,7 +2,7 @@
     <div>
         <!-- 底部版权信息 -->
         <footer class="text-center text-sm text-gray-500 py-4">
-          © 2026 班级宠物园 | <a href="https://www.luomor.com/" target="_blank" class="text-blue-500 hover:underline">烙馍网</a> | 
+          © 2026 星光班级宠物园 | <a href="https://www.luomor.com/" target="_blank" class="text-blue-500 hover:underline">烙馍网</a> | 
           <a 
                 href="https://beian.miit.gov.cn/" 
                 target="_blank" 

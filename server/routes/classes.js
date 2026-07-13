@@ -70,14 +70,29 @@ router.delete('/:id', authMiddleware, (req, res) => {
     return res.status(404).json({ error: '班级不存在或无权删除' })
   }
 
-  // 按外键依赖顺序删除：复活任务/记录 -> 评价记录 -> 徽章 -> 标签关联 -> 学生 -> 班级
-  db.prepare('DELETE FROM evaluation_records WHERE class_id = ?').run(req.params.id)
-  db.prepare('DELETE FROM badges WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
-  db.prepare('DELETE FROM student_tag_relations WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
-  db.prepare('DELETE FROM student_revival_tasks WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
-  db.prepare('DELETE FROM revival_records WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
-  db.prepare('DELETE FROM students WHERE class_id = ?').run(req.params.id)
-  db.prepare('DELETE FROM classes WHERE id = ?').run(req.params.id)
+  const deleteClass = db.transaction(() => {
+    // 1. 删除直接引用 classes(id) 的表（除 students 外，其依赖需先清理）
+    db.prepare('DELETE FROM evaluation_records WHERE class_id = ?').run(req.params.id)
+
+    // 2. 动态发现并删除所有引用 students(id) 的表（含历史遗留表）
+    const studentRefs = db.prepare(`
+      SELECT m.name AS table_name, fk."from" AS column_name
+      FROM sqlite_master m
+      JOIN pragma_foreign_key_list(m.name) fk ON fk."table" = 'students' AND fk."to" = 'id'
+      WHERE m.type = 'table'
+    `).all()
+
+    for (const { table_name, column_name } of studentRefs) {
+      db.prepare(`DELETE FROM "${table_name}" WHERE "${column_name}" IN (SELECT id FROM students WHERE class_id = ?)`)
+        .run(req.params.id)
+    }
+
+    // 3. 最后删除学生和班级
+    db.prepare('DELETE FROM students WHERE class_id = ?').run(req.params.id)
+    db.prepare('DELETE FROM classes WHERE id = ?').run(req.params.id)
+  })
+
+  deleteClass()
   res.json({ success: true })
 })
 

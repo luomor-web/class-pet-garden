@@ -70,10 +70,12 @@ router.delete('/:id', authMiddleware, (req, res) => {
     return res.status(404).json({ error: '班级不存在或无权删除' })
   }
 
-  // 按外键依赖顺序删除：evaluation_records -> badges -> student_tag_relations -> students -> classes
+  // 按外键依赖顺序删除：复活任务/记录 -> 评价记录 -> 徽章 -> 标签关联 -> 学生 -> 班级
   db.prepare('DELETE FROM evaluation_records WHERE class_id = ?').run(req.params.id)
   db.prepare('DELETE FROM badges WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
   db.prepare('DELETE FROM student_tag_relations WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
+  db.prepare('DELETE FROM student_revival_tasks WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
+  db.prepare('DELETE FROM revival_records WHERE student_id IN (SELECT id FROM students WHERE class_id = ?)').run(req.params.id)
   db.prepare('DELETE FROM students WHERE class_id = ?').run(req.params.id)
   db.prepare('DELETE FROM classes WHERE id = ?').run(req.params.id)
   res.json({ success: true })
